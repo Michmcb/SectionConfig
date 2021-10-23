@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+	 <LangVersion>latest</LangVersion>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Version>0.1</Version>
+    <Authors>Michael McBride</Authors>
+    <Company></Company>
+    <Product>SectionConfig</Product>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Description>A .NET library which allows you to read and write plain-text minimal syntax configuration files. As the name implies, you can have sections and subsections as well.</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/Michmcb/SectionConfig</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
+    <RepositoryType>Github</RepositoryType>
+    <PackageTags>config configuration text fluent</PackageTags>
+    <PackageReleaseNotes>- Initial Release</PackageReleaseNotes>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageIconUrl />
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="..\icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.4" Condition="'$(TargetFramework)'=='netstandard2.0'" />
+  </ItemGroup>
+</Project>

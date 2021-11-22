@@ -9,7 +9,11 @@
 	/// </summary>
 	public sealed class CfgLoader
 	{
+		// Having this be an instance class would let us have CfgRoot and IEqualityComparer be instance properties. That would lessen problems.
+		// We can have keep these static methods for convenience, if we just want to load a single config stream.
+
 		// TODO make async variations of these
+
 		/// <summary>
 		/// Loads section config data from the file at <paramref name="path"/> into <paramref name="root"/>, reading using the <paramref name="encoding"/>.
 		/// </summary>

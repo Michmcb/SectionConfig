@@ -6,6 +6,11 @@
 
 	internal sealed class ReadResultHandler
 	{
+#if NETSTANDARD2_0
+		private const string KeySep = ":";
+#else
+		private const char KeySep = ':';
+#endif
 		private readonly CfgRoot root;
 		private readonly IEqualityComparer<string> keyComparer;
 		private ICfgObjectParent section;
@@ -22,6 +27,9 @@
 			parentSections = new();
 		}
 		public LoadResult Result { get; private set; }
+		/// <summary>
+		/// Returns true if end or error encountered, false otherwise.
+		/// </summary>
 		internal bool Handle(ReadResult rr)
 		{
 			switch (rr.Token)
@@ -33,7 +41,7 @@
 					CfgValue value = new(key, rr.GetContent());
 					if (section.TryAdd(value) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(':', parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
+						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
 						return true;
 					}
 					break;
@@ -43,7 +51,7 @@
 					valueList = new(key, new List<string>());
 					if (section.TryAdd(valueList) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(':', parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
+						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
 						return true;
 					}
 					break;
@@ -57,7 +65,7 @@
 					CfgSection newSection = new(key, keyComparer);
 					if (section.TryAdd(newSection) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(':', parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), "\" was found"));
+						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), "\" was found"));
 						return true;
 					}
 					section = newSection;

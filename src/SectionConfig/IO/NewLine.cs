@@ -17,9 +17,5 @@
 		/// Carriage Return Line Feed: \r\n (Non-Unix)
 		/// </summary>
 		CrLf,
-		/// <summary>
-		/// Carriage Return: \r (Obsolete)
-		/// </summary>
-		Cr,
 	}
 }

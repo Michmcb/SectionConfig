@@ -60,12 +60,31 @@
 				return Unsafe.As<string>(val);
 			}
 		}
+#if !NETSTANDARD2_0
 		/// <summary>
 		/// If this is a string, returns the string.
 		/// If this is an array, returns all elements of the array concatenated, separated by <paramref name="separator"/>.
 		/// If this is an empty array, returns null.
 		/// </summary>
 		public string? ToString(char separator)
+		{
+			if (array)
+			{
+				string[] arr = Unsafe.As<string[]>(val);
+				return arr.Length >= 1 ? string.Join(separator, arr) : null;
+			}
+			else
+			{
+				return Unsafe.As<string>(val);
+			}
+		}
+#endif
+		/// <summary>
+		/// If this is a string, returns the string.
+		/// If this is an array, returns all elements of the array concatenated, separated by <paramref name="separator"/>.
+		/// If this is an empty array, returns null.
+		/// </summary>
+		public string? ToString(string separator)
 		{
 			if (array)
 			{

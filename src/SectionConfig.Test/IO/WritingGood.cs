@@ -5,6 +5,7 @@
 	using Xunit;
 	public static class WritingGood
 	{
+		private static readonly CfgKey key = CfgKey.Create("Key");
 		[Fact]
 		public static void KeyValues()
 		{
@@ -90,8 +91,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.DoubleIfNeeded, multiline: Multiline.Auto))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: Value\nKey:\n\tValue\n\tValue\n\tValue\n", sw.ToString());
 		}
@@ -101,8 +102,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.DoubleIfNeeded, multiline: Multiline.Never))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: Value\nKey: \"Value\nValue\nValue\"\n", sw.ToString());
 		}
@@ -112,8 +113,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.DoubleIfNeeded, multiline: Multiline.AlwaysIfPossible))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key:\n\tValue\nKey:\n\tValue\n\tValue\n\tValue\n", sw.ToString());
 		}
@@ -123,8 +124,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: Value\nKey:\n\tValue\n\tValue\n\tValue\n", sw.ToString());
 		}
@@ -134,8 +135,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Never))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: Value\nKey: 'Value\nValue\nValue'\n", sw.ToString());
 		}
@@ -145,8 +146,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.AlwaysIfPossible))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key:\n\tValue\nKey:\n\tValue\n\tValue\n\tValue\n", sw.ToString());
 		}
@@ -156,8 +157,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysDouble, multiline: Multiline.Auto))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: \"Value\"\nKey: \"Value\nValue\nValue\"\n", sw.ToString());
 		}
@@ -167,8 +168,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysDouble, multiline: Multiline.Never))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: \"Value\"\nKey: \"Value\nValue\nValue\"\n", sw.ToString());
 		}
@@ -178,8 +179,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysDouble, multiline: Multiline.AlwaysIfPossible))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: \"Value\"\nKey: \"Value\nValue\nValue\"\n", sw.ToString());
 		}
@@ -189,8 +190,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysSingle, multiline: Multiline.Auto))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
 		}
@@ -200,8 +201,8 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysSingle, multiline: Multiline.Never))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
 		}
@@ -211,10 +212,22 @@
 			using StringWriter sw = new();
 			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.AlwaysSingle, multiline: Multiline.AlwaysIfPossible))
 			{
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value");
-				scw.WriteKeyValue(CfgKey.Create("Key"), "Value\nValue\nValue");
+				scw.WriteKeyValue(key, "Value");
+				scw.WriteKeyValue(key, "Value\nValue\nValue");
 			}
 			Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
 		}
+		//[Fact]
+		//public static void Comments()
+		//{
+		//	using StringWriter sw = new();
+		//	using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+		//	{
+		//		scw.WriteComment("Hello world");
+		//		scw.WriteKey(key);
+		//		scw.WriteValue("Value");
+		//	}
+		//	Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
+		//}
 	}
 }

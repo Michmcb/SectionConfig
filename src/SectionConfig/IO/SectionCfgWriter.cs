@@ -10,8 +10,8 @@
 	public sealed class SectionCfgWriter : IDisposable
 	{
 		private static readonly char[] crlf = new char[] { '\n', '\r' };
-		private static readonly char[] cr = new char[] { '\r' };
 		private static readonly char[] lf = new char[] { '\n' };
+		private static readonly char[] tab = new char[] { '\t' };
 		private readonly Stack<int> tokenIds;
 		private int nextId;
 		/// <summary>
@@ -30,16 +30,16 @@
 		/// Writes to <paramref name="writer"/>.
 		/// </summary>
 		/// <param name="writer">The stream to write to.</param>
-		/// <param name="indentation">The indentation to use per level of indentation. Must be all whitespace.</param>
+		/// <param name="indentation">The indentation to use per level of indentation. Must be all whitespace. If default/empty, uses a single tab instead.</param>
 		/// <param name="newLine">The newline style to use</param>
 		/// <param name="quoting">Quoting style to use for values.</param>
 		/// <param name="multiline">Multiline style to use for values.</param>
 		/// <param name="closeOutput">If true, will dispose of <paramref name="writer"/> when this instance is disposed of. If false, disposing this instance will do nothing.</param>
 		public SectionCfgWriter(TextWriter writer, ReadOnlyMemory<char> indentation = default, NewLine newLine = IO.NewLine.Platform, Quoting quoting = Quoting.DoubleIfNeeded, Multiline multiline = Multiline.Auto, bool closeOutput = true)
 		{
-			// Dfeault indentation to tabs, otherwise use that they gave us (but it has to be all whitespace)
+			// Default indentation to tabs, otherwise use that they gave us (but it has to be all whitespace)
 			Indentation = indentation.Length == 0
-				? (new char[1] { '\t' })
+				? tab
 				: indentation.Span.IsWhiteSpace()
 					? indentation
 					: throw new ArgumentException("Indentation must be entirely whitespace", nameof(indentation));
@@ -48,7 +48,6 @@
 			{
 				IO.NewLine.Lf => lf,
 				IO.NewLine.CrLf => crlf,
-				IO.NewLine.Cr => cr,
 				_ => Environment.NewLine.AsMemory(),
 			};
 			Quoting = quoting;
@@ -96,6 +95,33 @@
 		/// The current state.
 		/// </summary>
 		public StreamState State { get; private set; }
+//		public void WriteComment(ReadOnlySpan<char> comment)
+//		{
+//			switch (State)
+//			{
+//				case StreamState.Start:
+//					Writer.Write('#');
+//					Writer.Write(comment);
+//					break;
+//				case StreamState.AfterKey:
+//					break;
+//				case StreamState.SectionOpen:
+//					break;
+//				case StreamState.List:
+//					break;
+//				case StreamState.SectionClose:
+//					break;
+//				case StreamState.Error:
+//				case StreamState.End:
+//					throw new InvalidOperationException(string.Concat("Can't write comment \"",
+//#if NETSTANDARD2_0
+//						comment.ToString(),
+//#else
+//						comment,
+//#endif
+//						"\", because the current state is ", State.ToString()));
+//			}
+//		}
 		/// <summary>
 		/// Equivalent to calling <see cref="WriteKey(CfgKey)"/> followed by <see cref="WriteValue(in ReadOnlySpan{char})"/>.
 		/// </summary>
@@ -149,7 +175,13 @@
 		{
 			if (State != StreamState.AfterKey)
 			{
-				throw new InvalidOperationException(string.Concat("Can't write value \"", new string(val), "\", because the current state is ", State.ToString(), " "));
+				throw new InvalidOperationException(string.Concat("Can't write value \"",
+#if NETSTANDARD2_0
+					val.ToString(),
+#else
+					new string(val),
+#endif
+					"\", because the current state is ", State.ToString(), " "));
 			}
 			Writer.Write(CfgSyntax.KeyEnd);
 			// If they asked to always quote, then we do that
@@ -232,7 +264,7 @@
 		{
 			if (State != StreamState.AfterKey)
 			{
-				throw new InvalidOperationException(string.Concat("Can't write open section because the current state is ", State.ToString(), " "));
+				throw new InvalidOperationException(string.Concat("Can't write open section because the current state is ", State.ToString()));
 			}
 			Writer.Write(" {");
 			Writer.Write(NewLine);
@@ -246,7 +278,13 @@
 		{
 			if (State != StreamState.List)
 			{
-				throw new InvalidOperationException(string.Concat("Can't write list value \"", new string(val), "\", because the current state is ", State.ToString(), " "));
+				throw new InvalidOperationException(string.Concat("Can't write list value \"",
+#if NETSTANDARD2_0
+					val.ToString(),
+#else
+					new string(val),
+#endif
+					"\", because the current state is ", State.ToString()));
 			}
 			bool mustQuote = NeedsQuoting(val);
 			WriteIndentation(IndentationLevel);
@@ -321,31 +359,11 @@
 			{
 				char c = val[i];
 				Writer.Write(c);
-				switch (c)
+				// Now check to see if we wrote a newline char. If we did, then we need to write some indentation.
+				// This works for both \n and \r\n, because when writing the \r first nothing special happens, then when we write the \n, the indentation is added.
+				if (c == '\n')
 				{
-					case '\r':
-						// But if it isn't we write the indentation first, then the next char.
-						// Might be \r\n, so check the next char
-						if (++i < val.Length)
-						{
-							c = val[i];
-							// If it's \n then we write that, and then write the indentation
-							if (c == '\n')
-							{
-								Writer.Write(c);
-								WriteIndentation(indentationLevel);
-							}
-							else
-							{
-								WriteIndentation(indentationLevel);
-								Writer.Write(c);
-							}
-						}
-						break;
-					case '\n':
-						// Newline, so write the indentation
-						WriteIndentation(indentationLevel);
-						break;
+					WriteIndentation(indentationLevel);
 				}
 			}
 		}
@@ -380,7 +398,7 @@
 						{
 							return true;
 						}
-						else if (char.IsWhiteSpace(val[^1]))
+						else if (char.IsWhiteSpace(val[val.Length - 1]))
 						{
 							return true;
 						}

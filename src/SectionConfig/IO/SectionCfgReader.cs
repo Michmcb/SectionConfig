@@ -103,7 +103,7 @@
 							StringBuilder sb = new();
 							sb.Append(c.Value);
 							return whitespace.Length > 0 && nsc1.SawNewline
-								? Value(ReadUnquotedMultilineString(sb, whitespace.ToString()))
+								? Value(ReadUnquotedMultilineString(sb, whitespace.ToString().AsSpan()))
 								: Value(ReadTrimmedLine(c.Value));
 					}
 				case StreamState.SectionOpen:
@@ -299,13 +299,9 @@
 		/// <returns>The string, including any trailing whitespace.</returns>
 		private string ReadUnquotedMultilineString(StringBuilder sb, in ReadOnlySpan<char> indentation)
 		{
-			// TODO clean this code up, it's a bit duplicatey...
 			Debug.Assert(indentation.Length != 0, "Multiline strings always have indentation, so if there's none it should be read as a single-line string");
-			// Highly, highly doubt we'll ever have THIS much indentation...
-			Span<char> possibleIndentation = indentation.Length <= 256
-				? stackalloc char[indentation.Length]
-				: new char[indentation.Length];
 			bool go = true;
+			int chomp = 1;
 			while (go)
 			{
 				int r = Reader.Read();
@@ -314,72 +310,63 @@
 					char c = (char)r;
 					sb.Append(c);
 
-					// If we encountered a lone newline char, be it \r or \n or \r\n then we need to check the indentation.
-					int i = 0;
-					if (c == '\r')
+					// If we read a \n or \r\n, we check the indentation. If the indentation matches we keep reading, if it does not, then we stop reading.
+					switch (c)
 					{
-						// If we got \r, we need to ignore ONE \n, if it follows.
-						// So we read the first char, check if it's \n.
-						r = Reader.Read();
-						if (r != -1)
-						{
-							if ((c = (char)r) == '\n')
-							{
-								// A \n, next condition will handle it, just append it too
-								sb.Append(c);
-							}
-							else
-							{
-								// Not a \n, so we need to check the indentation
-								i = 1;
-								if (indentation[0] != (c = (char)r))
-								{
-									// After this we need to put back the character we just read because it isn't whitespace; it's significant
-									lastChar = c;
-									go = false;
-									break;
-								}
-								else
-								{
-									possibleIndentation[0] = c;
-								}
-							}
-						}
-						else
-						{
-							// End of stream
-							go = false;
-							break;
-						}
-					}
-					if (c == '\n')
-					{
-						// We read one char at a time, and as soon as we see a non-indentation-matching char, bail out set it as the last char read
-						for (; i < indentation.Length; i++)
-						{
+						case '\r':
 							r = Reader.Read();
 							if (r != -1)
 							{
-								if (indentation[i] != (c = (char)r))
+								// If it's an \r\n, then we need to do the same thing as if it were an \n. But append the \n before we do.
+								if ((c = (char)r) == '\n')
 								{
-									// After this we need to put back the character we just read because it isn't whitespace; it's significant, and the next read will need it
-									lastChar = c;
-									go = false;
-									break;
+									// We'll have to chomp off 2 trailing characters (\r\n) in this case if we happen to find the end of the multiline value.
+									sb.Append('\n');
+									chomp = 2;
+									goto case '\n';
 								}
 								else
 								{
-									possibleIndentation[i] = c;
+									// Was just a lone \r, so just append the next char and continue as normal.
+									sb.Append(c);
 								}
 							}
 							else
 							{
-								// End of stream, all good. Append what we've read, and stop
-								sb.Append(possibleIndentation[0..i]);
+								// End of stream, so stop reading
 								go = false;
-								break;
 							}
-						}
+							break;
+						case '\n':
+							// We read one char at a time, and as soon as we see a non-indentation-matching char, bail out set it as the last char read
+							for (int i = 0; i < indentation.Length; i++)
+							{
+								r = Reader.Read();
+								if (r != -1)
+								{
+									if (indentation[i] != (c = (char)r))
+									{
+										// The character read does not match the defined indentation, so this marks the end of the multiline value.
+										// We save c as lastChar (so the next read picks it up), remove the trailing \n or \r\n, and then stop looping so the string returns.
+
+										sb.Remove(sb.Length - chomp, chomp);
+										lastChar = c;
+										go = false;
+										break;
+									}
+								}
+								else
+								{
+									// We've hit the end of the stream before we managed to match all of the indentation.
+									// So remove the trailing \n or \r\n, and then stop looping so the string returns.
+
+									sb.Remove(sb.Length - chomp, chomp);
+									go = false;
+									break;
+								}
+							}
+							chomp = 1;
+							break;
 					}
 				}
 				else
@@ -423,7 +410,6 @@
 		/// Skips all whitespace and returns the first non-whitespace character found.
 		/// It also appends all whitespace (only AFTER a newline) to <paramref name="whitespace"/>.
 		/// </summary>
-		/// <returns>The first non-whitespace character, or null if end of stream was found. Also, if we saw any whitespace at all.</returns>
 		private NextSignificantChar NextNonWhitespaceChar(StringBuilder whitespace)
 		{
 			bool b = false;

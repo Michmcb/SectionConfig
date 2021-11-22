@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;net5.0;netstandard2.0</TargetFrameworks>
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -16,7 +16,10 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text fluent</PackageTags>
-    <PackageReleaseNotes>- Initial Release</PackageReleaseNotes>
+    <PackageReleaseNotes>- Targets netstandard2.0 and net6.0
+- Readme added
+- Only supports crlf and lf as lines (to simplify code), cr by itself is not enough
+	 </PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

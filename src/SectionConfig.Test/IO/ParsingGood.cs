@@ -68,7 +68,7 @@ List:{
 					new(SectionCfgToken.Value, "Blah"),
 					new(CfgKey.Create("Key 4")),
 					new(SectionCfgToken.Comment, "Comment"),
-					new(SectionCfgToken.Value, "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone\n"),
+					new(SectionCfgToken.Value, "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
 					new(CfgKey.Create("Section")),
 					new(SectionCfgToken.StartSection),
 					new(CfgKey.Create("Key")),
@@ -93,7 +93,7 @@ List:{
 						new("Key 1", "Blah"),
 						new("Key 2", "Blah"),
 						new("Key3", "Blah"),
-						new("Key 4", "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone\n")
+						new("Key 4", "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone")
 					);
 				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
 				Helper.AssertKeyValues(section,
@@ -428,7 +428,51 @@ List:{
 		[Fact]
 		public static void MultilineUnquotedValueLf()
 		{
+			string s = "Key:\n\tThis value\n\tspans many lines";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(CfgKey.Create("Key")),
+					new(SectionCfgToken.Value, "This value\nspans many lines"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key", "This value\nspans many lines")
+				);
+			}
+		}
+		[Fact]
+		public static void MultilineUnquotedValueLfTrailingNewline()
+		{
+			// Trailing newlines are removed
 			string s = "Key:\n\tThis value\n\tspans many lines\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(CfgKey.Create("Key")),
+					new(SectionCfgToken.Value, "This value\nspans many lines"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key", "This value\nspans many lines")
+				);
+			}
+		}
+		[Fact]
+		public static void MultilineUnquotedValueLfTrailingNewlineAndTab()
+		{
+			// In a text editor, another line of indentation makes it appear as if the multiline value has a blank last line, hence why we should have a trailing newline
+			string s = "Key:\n\tThis value\n\tspans many lines\n\t";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -449,13 +493,13 @@ List:{
 		[Fact]
 		public static void MultilineUnquotedValueCrLf()
 		{
-			string s = "Key:\r\n\tThis value\r\n\tspans many lines\r\n";
+			string s = "Key:\r\n\tThis value\r\n\tspans many lines";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\r\nspans many lines\r\n"),
+					new(SectionCfgToken.Value, "This value\r\nspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -463,12 +507,60 @@ List:{
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\r\nspans many lines\r\n")
+					new KeyValuePair<string, string>("Key", "This value\r\nspans many lines")
 				);
 			}
 		}
 		[Fact]
-		public static void MultilineUnquotedValueCr()
+		public static void MultilineUnquotedValueCrLfTrailingNewline()
+		{
+			string s = "Key:\r\n\tThis value\r\n\tspans many lines\r\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(CfgKey.Create("Key")),
+					new(SectionCfgToken.Value, "This value\r\nspans many lines"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key", "This value\r\nspans many lines")
+				);
+			}
+		}
+		/// <summary>
+		/// This treats \r as any old character because we don't support just \r as newlines
+		/// </summary>
+		[Fact]
+		public static void SinglelineUnquotedValueCr()
+		{
+			string s = "Key:\r\tThis value\r\tspans many lines";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(CfgKey.Create("Key")),
+					new(SectionCfgToken.Value, "This value\r\tspans many lines"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key", "This value\r\tspans many lines")
+				);
+			}
+		}
+		/// <summary>
+		/// This treats \r as any old character because we don't support just \r as newlines
+		/// </summary>
+		[Fact]
+		public static void SinglelineUnquotedValueCrTrailingCr()
 		{
 			string s = "Key:\r\tThis value\r\tspans many lines\r";
 			using (SectionCfgReader scr = new(new StringReader(s)))
@@ -476,7 +568,7 @@ List:{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\rspans many lines\r"),
+					new(SectionCfgToken.Value, "This value\r\tspans many lines\r"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -484,7 +576,7 @@ List:{
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\rspans many lines\r")
+					new KeyValuePair<string, string>("Key", "This value\r\tspans many lines\r")
 				);
 			}
 		}
@@ -497,7 +589,7 @@ List:{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans\rmany\r\nlines\n"),
+					new(SectionCfgToken.Value, "This value\nspans\r\tmany\r\nlines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -505,7 +597,7 @@ List:{
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans\rmany\r\nlines\n")
+					new KeyValuePair<string, string>("Key", "This value\nspans\r\tmany\r\nlines")
 				);
 			}
 		}
@@ -685,13 +777,14 @@ List:{
 		[Fact]
 		public static void QuotedListSpaces()
 		{
-			string s = "List:{\"One\" \"'Two'\" 'Three' '\"Four\"'}";
+			string s = "List:{\"One\" \"One\" \"'Two'\" 'Three' '\"Four\"'}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("List")),
 					new(SectionCfgToken.StartList),
+					new(SectionCfgToken.ListValue, "One"),
 					new(SectionCfgToken.ListValue, "One"),
 					new(SectionCfgToken.ListValue, "'Two'"),
 					new(SectionCfgToken.ListValue, "Three"),
@@ -705,6 +798,7 @@ List:{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
 				Assert.Collection(list.Values,
+					x => Assert.Equal("One", x),
 					x => Assert.Equal("One", x),
 					x => Assert.Equal("'Two'", x),
 					x => Assert.Equal("Three", x),

@@ -85,9 +85,6 @@
 					}
 					switch (c.Value)
 					{
-						case CfgSyntax.Comment:
-							// Don't care if it's the end of the stream
-							return ReadComment();
 						case CfgSyntax.StartSectionOrList:
 							// Start of a list
 							State = StreamState.List;
@@ -417,9 +414,14 @@
 			{
 				char c = lastChar;
 				lastChar = '\0';
-				if (!char.IsWhiteSpace(c)) return new(c, false);
-				else b = true;
-
+				if (!char.IsWhiteSpace(c))
+				{
+					return new(c, false);
+				}
+				else
+				{
+					b = true;
+				}
 			}
 			while (true)
 			{

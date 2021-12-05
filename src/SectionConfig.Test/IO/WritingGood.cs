@@ -78,12 +78,12 @@
 				WriteSectionToken st = scw.WriteKeyOpenSection(CfgKey.Create("Section"));
 				WriteValueListToken vl = scw.WriteKeyOpenValueList(CfgKey.Create("Key1"));
 				vl.WriteListValue("Value1");
-				vl.WriteListValue("Value 2");
+				vl.WriteListValue("#Value 2");
 				vl.WriteListValue("Value  3");
 				vl.Close();
 				st.Close();
 			}
-			Assert.Equal("Section {\n\tKey1: {\n\t\tValue1\n\t\tValue 2\n\t\tValue  3\n\t}\n}\n", sw.ToString());
+			Assert.Equal("Section {\n\tKey1: {\n\t\tValue1\n\t\t\"#Value 2\"\n\t\tValue  3\n\t}\n}\n", sw.ToString());
 		}
 		[Fact]
 		public static void DoubleQuotesIfNeededAutoMultiline()
@@ -217,17 +217,53 @@
 			}
 			Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
 		}
-		//[Fact]
-		//public static void Comments()
-		//{
-		//	using StringWriter sw = new();
-		//	using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
-		//	{
-		//		scw.WriteComment("Hello world");
-		//		scw.WriteKey(key);
-		//		scw.WriteValue("Value");
-		//	}
-		//	Assert.Equal("Key: 'Value'\nKey: 'Value\nValue\nValue'\n", sw.ToString());
-		//}
+		[Fact]
+		public static void SingleLineComment()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				scw.WriteComment("Hello world");
+				scw.WriteKey(key);
+				scw.WriteValue("Value");
+			}
+			Assert.Equal("#Hello world\nKey: Value\n", sw.ToString());
+		}
+		[Fact]
+		public static void MultiLineComment()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				scw.WriteComment("Hello world\nHello world 2\nLine 3");
+				scw.WriteKey(key);
+				scw.WriteValue("Value");
+			}
+			Assert.Equal("#Hello world\n#Hello world 2\n#Line 3\nKey: Value\n", sw.ToString());
+		}
+		[Fact]
+		public static void MultiLineCommentReplaceLineBreaks()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				scw.WriteComment("Hello world\nHello world 2\r\nLine 3", replaceLineBreaks: true);
+				scw.WriteKey(key);
+				scw.WriteValue("Value");
+			}
+			Assert.Equal("#Hello world\n#Hello world 2\n#Line 3\nKey: Value\n", sw.ToString());
+		}
+		[Fact]
+		public static void MultiLineCommentKeepLineBreaks()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				scw.WriteComment("Hello world\nHello world 2\r\nLine 3", replaceLineBreaks: false);
+				scw.WriteKey(key);
+				scw.WriteValue("Value");
+			}
+			Assert.Equal("#Hello world\n#Hello world 2\r\n#Line 3\nKey: Value\n", sw.ToString());
+		}
 	}
 }

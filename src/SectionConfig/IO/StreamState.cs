@@ -10,11 +10,11 @@
 		/// </summary>
 		Start,
 		/// <summary>
-		/// Just read or write a key
+		/// Just read or wrote a key
 		/// </summary>
 		AfterKey,
 		/// <summary>
-		/// Just read a section open
+		/// Just read or wrote a section open
 		/// </summary>
 		SectionOpen,
 		/// <summary>
@@ -22,7 +22,7 @@
 		/// </summary>
 		List,
 		/// <summary>
-		/// Just read a section close
+		/// Just read or wrote a section close
 		/// </summary>
 		SectionClose,
 		/// <summary>

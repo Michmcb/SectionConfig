@@ -33,7 +33,7 @@ Each string on a new line is a Value within that List. Values within the List ca
 
 
 ### Comments
-A Comment is a number sign (#), followed by text. They cannot occur in the middle of a Key or Value, but can appear anywhere else.
+A Comment is a number sign (#), followed by text. They must be the first thing on the line (besides whitespace).
 
 
 ## Examples
@@ -69,11 +69,6 @@ Key:
    "This value
    Spans many lines
    But it DOES include the indentation"
-
-# You can have a comment just after the key, but before the multiline value
-Key: # This comment isn't part of the multiline value
-   This part is
-   part of the value
 
 # A value list is done like this. This has 3 values, "one", "two", and "three".
 Key: {

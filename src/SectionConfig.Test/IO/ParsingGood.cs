@@ -13,13 +13,18 @@ namespace SectionConfig.Test.IO
 			string s = @"
 Key 1:     Blah    
 Key 2: 'Blah'
+# Some comment   
 	Key3: 'Blah'
-Key 4: #Comment
+Key 4:
 	This is a multiline value
 	It will just keep going
 	Until we find lesser indentation
 		This is still part of the string
 	Done
+
+	Key 5:
+	Misaligned, but still
+	a multiline value.
 Section{
 	Key:
 		'Also a multiline string
@@ -29,6 +34,7 @@ Section{
 List:{
 	String 1
 	""String 2""
+	# A comment
 	'String 3'
 	'String
 	4'
@@ -64,11 +70,13 @@ List:{
 					new(SectionCfgToken.Value, "Blah"),
 					new(CfgKey.Create("Key 2")),
 					new(SectionCfgToken.Value, "Blah"),
+					new(SectionCfgToken.Comment, " Some comment   "),
 					new(CfgKey.Create("Key3")),
 					new(SectionCfgToken.Value, "Blah"),
 					new(CfgKey.Create("Key 4")),
-					new(SectionCfgToken.Comment, "Comment"),
 					new(SectionCfgToken.Value, "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
+					new(CfgKey.Create("Key 5")),
+					new(SectionCfgToken.Value, "Misaligned, but still\na multiline value."),
 					new(CfgKey.Create("Section")),
 					new(SectionCfgToken.StartSection),
 					new(CfgKey.Create("Key")),
@@ -78,6 +86,7 @@ List:{
 					new(SectionCfgToken.StartList),
 					new(SectionCfgToken.ListValue, "String 1"),
 					new(SectionCfgToken.ListValue, "String 2"),
+					new(SectionCfgToken.Comment, " A comment"),
 					new(SectionCfgToken.ListValue, "String 3"),
 					new(SectionCfgToken.ListValue, "String\n\t4"),
 					new(SectionCfgToken.ListValue, "String\n\t5"),
@@ -88,7 +97,7 @@ List:{
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Assert.Equal(6, root.Elements.Count);
+				Assert.Equal(7, root.Elements.Count);
 				Helper.AssertKeyValues(root,
 						new("Key 1", "Blah"),
 						new("Key 2", "Blah"),
@@ -176,28 +185,6 @@ List:{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
-			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "")
-				);
-			}
-		}
-		[Fact]
-		public static void KeyCommentEmptyValue()
-		{
-			string s = "Key:#Comment";
-			using (SectionCfgReader scr = new(new StringReader(s)))
-			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Comment, "Comment"),
 					new(SectionCfgToken.Value, ""),
 					new(SectionCfgToken.End),
 				});
@@ -314,16 +301,15 @@ List:{
 			}
 		}
 		[Fact]
-		public static void KeyCommentValue()
+		public static void KeyValueStartingWithNumberSign()
 		{
-			string s = "Key:#This is a very important string!\nValue";
+			string s = "Key:#This is a very important string!";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Comment, "This is a very important string!"),
-					new(SectionCfgToken.Value, "Value"),
+					new(SectionCfgToken.Value, "#This is a very important string!"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -331,7 +317,7 @@ List:{
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "Value")
+					new KeyValuePair<string, string>("Key", "#This is a very important string!")
 				);
 			}
 		}

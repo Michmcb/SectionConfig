@@ -1,6 +1,7 @@
 ﻿namespace SectionConfig.Test.IO
 {
 	using SectionConfig.IO;
+	using System;
 	using System.IO;
 	using Xunit;
 
@@ -74,6 +75,17 @@
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
 				new(SectionCfgToken.Error, "Found end of stream when reading Key String"),
+			});
+		}
+		[Fact]
+		public static void CommentAfterKeyButBeforeValue()
+		{
+			using SectionCfgReader scr4 = new(new StringReader("Key:#Value\nInvalid"));
+			Helper.AssertReadMatches(scr4, new ReadResult[]
+			{
+				new(CfgKey.Create("Key")),
+				new(SectionCfgToken.Value, "#Value"),
+				new(SectionCfgToken.Error, "Found end of stream when reading Key Invalid"),
 			});
 		}
 		[Fact]

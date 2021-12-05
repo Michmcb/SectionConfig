@@ -22,6 +22,17 @@
 					Assert.Equal(er.GetContent(), ar.GetContent());
 				}
 			}
+			if (scr.State == StreamState.Error)
+			{
+				ReadResult ar = scr.Read();
+				Assert.Equal(SectionCfgToken.Error, ar.Token);
+				Assert.Equal("Encountered error, cannot read further", ar.GetContent());
+			}
+			else
+			{
+				ReadResult ar = scr.Read();
+				Assert.Equal(SectionCfgToken.End, ar.Token);
+			}
 		}
 		public static CfgRoot LoadsProperly(SectionCfgReader scr, StringComparer stringComparer)
 		{

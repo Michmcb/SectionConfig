@@ -9,7 +9,7 @@
 	/// </summary>
 	public sealed class SectionCfgWriter : IDisposable
 	{
-		private static readonly char[] crlf = new char[] { '\n', '\r' };
+		private static readonly char[] crlf = new char[] { '\r', '\n' };
 		private static readonly char[] lf = new char[] { '\n' };
 		private static readonly char[] tab = new char[] { '\t' };
 		private readonly Stack<int> tokenIds;
@@ -95,33 +95,61 @@
 		/// The current state.
 		/// </summary>
 		public StreamState State { get; private set; }
-//		public void WriteComment(ReadOnlySpan<char> comment)
-//		{
-//			switch (State)
-//			{
-//				case StreamState.Start:
-//					Writer.Write('#');
-//					Writer.Write(comment);
-//					break;
-//				case StreamState.AfterKey:
-//					break;
-//				case StreamState.SectionOpen:
-//					break;
-//				case StreamState.List:
-//					break;
-//				case StreamState.SectionClose:
-//					break;
-//				case StreamState.Error:
-//				case StreamState.End:
-//					throw new InvalidOperationException(string.Concat("Can't write comment \"",
-//#if NETSTANDARD2_0
-//						comment.ToString(),
-//#else
-//						comment,
-//#endif
-//						"\", because the current state is ", State.ToString()));
-//			}
-//		}
+		/// <summary>
+		/// Writes a comment. If any linebreaks are present, the comment will be written on multiple lines.
+		/// </summary>
+		/// <param name="comment">The comment to write.</param>
+		/// <param name="replaceLineBreaks">If true, any line-breaks (\r, \n, or \r\n) in the comment are replaced with <see cref="NewLine"/></param>
+		public void WriteComment(ReadOnlySpan<char> comment, bool replaceLineBreaks = true)
+		{
+			switch (State)
+			{
+				case StreamState.SectionOpen:
+				case StreamState.SectionClose:
+				case StreamState.Start:
+				case StreamState.List:
+					Util.SpanSplit(comment, '\n', (str, offset, length) =>
+					{
+						Writer.Write('#');
+						ReadOnlySpan<char> line = str.Slice(offset, length);
+						// If the string contained an \r\n, then our line will end with \r, so don't write that.
+						bool wasCrLf = line[line.Length - 1] == '\r';
+						if (wasCrLf)
+						{
+							Writer.Write(line.Slice(0, line.Length - 1));
+						}
+						else
+						{
+							Writer.Write(line);
+						}
+
+						if (replaceLineBreaks)
+						{
+							Writer.Write(NewLine.Span);
+						}
+						else if (wasCrLf)
+						{
+							Writer.Write(crlf);
+						}
+						else
+						{
+							Writer.Write('\n');
+						}
+						WriteIndentation(IndentationLevel);
+					});
+					break;
+				case StreamState.AfterKey:
+				case StreamState.Error:
+				case StreamState.End:
+					throw new InvalidOperationException(string.Concat("Can't write comment \"",
+#if NETSTANDARD2_0
+						comment.ToString(),
+#else
+						comment,
+#endif
+						"\", because the current state is ", State.ToString()));
+			}
+		}
 		/// <summary>
 		/// Equivalent to calling <see cref="WriteKey(CfgKey)"/> followed by <see cref="WriteValue(in ReadOnlySpan{char})"/>.
 		/// </summary>
@@ -229,14 +257,14 @@
 						break;
 					case Multiline.AlwaysIfPossible:
 						// Easy, always write multiline
-						Writer.Write(NewLine);
+						Writer.Write(NewLine.Span);
 						WriteIndentation(IndentationLevel + 1);
 						WriteRawMultiline(val, IndentationLevel + 1);
 						break;
 				}
 			}
 			State = StreamState.Start;
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 		}
 		/// <summary>
 		/// Opens a value list.
@@ -249,7 +277,7 @@
 				throw new InvalidOperationException(string.Concat("Can't write open value list because the current state is ", State.ToString(), " "));
 			}
 			Writer.Write(": {");
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 			++IndentationLevel;
 			State = StreamState.List;
 			int id = nextId++;
@@ -267,7 +295,7 @@
 				throw new InvalidOperationException(string.Concat("Can't write open section because the current state is ", State.ToString()));
 			}
 			Writer.Write(" {");
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 			++IndentationLevel;
 			State = StreamState.Start;
 			int id = nextId++;
@@ -297,7 +325,7 @@
 			{
 				if (val.IndexOfAny(crlf) != -1)
 				{
-					// TODO allow writing multi-line strings within a list
+					// TODO allow writing multi-line strings within a list, unquoted. Currently we're only allowed to write a multi-line string in a list if it is quoted.
 					WriteRawQuoted(val, Quoting);
 				}
 				else
@@ -305,7 +333,7 @@
 					Writer.Write(val);
 				}
 			}
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 		}
 		internal void WriteCloseValueList(int id)
 		{
@@ -319,7 +347,7 @@
 			}
 			WriteIndentation(--IndentationLevel);
 			Writer.Write(CfgSyntax.EndSectionOrList);
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 			State = StreamState.Start;
 		}
 		internal void WriteCloseSection(int id)
@@ -334,7 +362,7 @@
 			}
 			WriteIndentation(--IndentationLevel);
 			Writer.Write(CfgSyntax.EndSectionOrList);
-			Writer.Write(NewLine);
+			Writer.Write(NewLine.Span);
 			--SectionLevel;
 			State = StreamState.Start;
 		}

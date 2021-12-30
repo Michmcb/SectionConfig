@@ -36,11 +36,13 @@
 		}
 		public static CfgRoot LoadsProperly(SectionCfgReader scr, StringComparer stringComparer)
 		{
-			LoadResult lr = CfgLoader.TryLoad(scr, null, stringComparer);
-			Assert.Empty(lr.ErrMsg);
-			Assert.Equal(LoadError.Ok, lr.Error);
-			Assert.NotNull(lr.Root);
-			return lr.Root!;
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> lr = CfgLoader.TryLoad(scr, stringComparer);
+			CfgRoot root = lr.ValueOrException();
+			ErrMsg<LoadError> err = lr.Error;
+			Assert.Equal(LoadError.Ok, err.Code);
+			Assert.Null(err.Message);
+			Assert.NotNull(root);
+			return root;
 		}
 		public static void AssertKeyValues(ICfgObjectParent section, params KeyValuePair<string, string>[] kvps)
 		{

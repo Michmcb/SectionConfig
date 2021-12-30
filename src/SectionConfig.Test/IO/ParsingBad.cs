@@ -80,8 +80,8 @@
 		[Fact]
 		public static void CommentAfterKeyButBeforeValue()
 		{
-			using SectionCfgReader scr4 = new(new StringReader("Key:#Value\nInvalid"));
-			Helper.AssertReadMatches(scr4, new ReadResult[]
+			using SectionCfgReader scr = new(new StringReader("Key:#Value\nInvalid"));
+			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
 				new(CfgKey.Create("Key")),
 				new(SectionCfgToken.Value, "#Value"),

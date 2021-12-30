@@ -15,11 +15,53 @@
 		public CfgRoot(IEqualityComparer<string> keyComparer)
 		{
 			_elements = new(keyComparer);
+			KeyComparer = keyComparer;
 		}
+		/// <summary>
+		/// The key comparer this was constructed with.
+		/// </summary>
+		public IEqualityComparer<string> KeyComparer { get; }
 		/// <summary>
 		/// The <see cref="ICfgObject"/> that this contains.
 		/// </summary>
 		public IReadOnlyDictionary<string, ICfgObject> Elements => _elements;
+		/// <summary>
+		/// Removes the <see cref="ICfgObject"/> with the provided <paramref name="key"/>.
+		/// </summary>
+		/// <param name="key">The key to remove.</param>
+		/// <returns>True if the object was removed, false otherwise.</returns>
+		public bool Remove(string key)
+		{
+			// TODO make some Remove methods which accept the object itself
+			// We need to set the hasParent flag to false
+			if (_elements.TryGetValue(key, out ICfgObject? element))
+			{
+				_elements.Remove(key);
+				switch (element.Type)
+				{
+					case CfgType.Value:
+						element.ToValue().hasParent = false;
+						break;
+					case CfgType.ValueList:
+						element.ToValueList().hasParent = false;
+						break;
+					case CfgType.Section:
+						element.ToSection().hasParent = false;
+						break;
+				}
+				return true;
+			}
+			else return false;
+		}
+		/// <summary>
+		/// Removes the <see cref="ICfgObject"/> with the provided <paramref name="key"/>.
+		/// </summary>
+		/// <param name="key">The key to remove.</param>
+		/// <returns>True if the object was removed, false otherwise.</returns>
+		public bool Remove(CfgKey key)
+		{
+			return Remove(key.KeyString);
+		}
 		/// <summary>
 		/// Attempts to add <paramref name="section"/> to this.
 		/// </summary>

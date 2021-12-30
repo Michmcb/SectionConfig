@@ -114,6 +114,7 @@
 						ReadOnlySpan<char> line = str.Slice(offset, length);
 						// If the string contained an \r\n, then our line will end with \r, so don't write that.
 						bool wasCrLf = line[line.Length - 1] == '\r';
+						WriteIndentation(IndentationLevel);
 						if (wasCrLf)
 						{
 							Writer.Write(line.Slice(0, line.Length - 1));
@@ -135,7 +136,6 @@
 						{
 							Writer.Write('\n');
 						}
-						WriteIndentation(IndentationLevel);
 					});
 					break;
 				case StreamState.AfterKey:

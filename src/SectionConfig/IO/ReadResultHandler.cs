@@ -12,21 +12,19 @@
 		private const char KeySep = ':';
 #endif
 		private readonly CfgRoot root;
-		private readonly IEqualityComparer<string> keyComparer;
 		private ICfgObjectParent section;
 		private CfgValueList valueList;
 		private CfgKey key;
 		private readonly Stack<ICfgObjectParent> parentSections;
-		public ReadResultHandler(CfgRoot root, IEqualityComparer<string> keyComparer)
+		public ReadResultHandler(CfgRoot root)
 		{
 			this.root = root;
-			this.keyComparer = keyComparer;
 			section = root;
 			key = default;
 			valueList = null!;
 			parentSections = new();
 		}
-		public LoadResult Result { get; private set; }
+		public ValOrErr<CfgRoot, ErrMsg<LoadError>> Result { get; private set; }
 		/// <summary>
 		/// Returns true if end or error encountered, false otherwise.
 		/// </summary>
@@ -41,7 +39,8 @@
 					CfgValue value = new(key, rr.GetContent());
 					if (section.TryAdd(value) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
+						parentSections.Push(section);
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
 						return true;
 					}
 					break;
@@ -51,7 +50,8 @@
 					valueList = new(key, new List<string>());
 					if (section.TryAdd(valueList) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), key, "\" was found"));
+						parentSections.Push(section);
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
 						return true;
 					}
 					break;
@@ -62,10 +62,11 @@
 					break;
 				case SectionCfgToken.StartSection:
 					parentSections.Push(section);
-					CfgSection newSection = new(key, keyComparer);
+					CfgSection newSection = new(key, root.KeyComparer);
 					if (section.TryAdd(newSection) != AddError.Ok)
 					{
-						Result = new(LoadError.DuplicateKey, string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), "\" was found"));
+						parentSections.Push(section);
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
 						return true;
 					}
 					section = newSection;
@@ -78,10 +79,19 @@
 					return true;
 				default:
 				case SectionCfgToken.Error:
-					Result = new(LoadError.MalformedStream, rr.GetContent());
+					Result = new(new ErrMsg<LoadError>(LoadError.MalformedStream, rr.GetContent()));
 					return true;
 			}
 			return false;
+
+			static string DuplicateKeyErrorMsg(Stack<ICfgObjectParent> parentSections, string currentKey)
+			{
+				// The bottom object in the stack is always the CfgRoot object.
+				// And, we want to write things in order of bottom to top.
+				// So, we reverse the iteration order, then skip the first object, which will be the CfgRoot object.
+				// Then we only have the CfgSections left and can join them all together, and append the current key onto the end.
+				return string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), KeySep, currentKey, "\" was found");
+			}
 		}
 	}
 }

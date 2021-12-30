@@ -12,6 +12,18 @@
 		/// </summary>
 		IReadOnlyDictionary<string, ICfgObject> Elements { get; }
 		/// <summary>
+		/// Removes the <see cref="ICfgObject"/> with the provided <paramref name="key"/>.
+		/// </summary>
+		/// <param name="key">The key to remove.</param>
+		/// <returns>True if the object was removed, false otherwise.</returns>
+		bool Remove(CfgKey key);
+		/// <summary>
+		/// Removes the <see cref="ICfgObject"/> with the provided <paramref name="key"/>.
+		/// </summary>
+		/// <param name="key">The key to remove.</param>
+		/// <returns>True if the object was removed, false otherwise.</returns>
+		bool Remove(string key);
+		/// <summary>
 		/// Attempts to add <paramref name="value"/> to this.
 		/// </summary>
 		/// <param name="value">The value to add.</param>

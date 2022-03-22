@@ -40,5 +40,17 @@
 			Assert.Throws<InvalidCfgKeyException>(() => CfgKey.Create("}"));
 			Assert.Null(CfgKey.TryCreate("}"));
 		}
+		[Fact]
+		public static void Equality()
+		{
+			Assert.True(CfgKey.Create("Key") == CfgKey.Create("Key"));
+			Assert.True(CfgKey.Create("Key").Equals(CfgKey.Create("Key")));
+			Assert.True(CfgKey.Create("Key").Equals((object?)CfgKey.Create("Key")));
+			Assert.False(CfgKey.Create("Key").Equals(null));
+			Assert.False(CfgKey.Create("Key") != CfgKey.Create("Key"));
+
+			Assert.Equal("Key", CfgKey.Create("Key").ToString());
+			Assert.Equal("Key".GetHashCode(), CfgKey.Create("Key").GetHashCode());
+		}
 	}
 }

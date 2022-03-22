@@ -69,7 +69,7 @@
 			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
 			WriteValueListToken vlt = scw.WriteKeyOpenValueList(CfgKey.Create("Key"));
 			vlt.Close();
-			Assert.Throws<InvalidOperationException>(() => vlt.Close());
+			Assert.Throws<InvalidOperationException>(() => vlt.Dispose());
 		}
 		[Fact]
 		public static void BadStateCloseSectionTwice()
@@ -85,7 +85,7 @@
 			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
 			WriteSectionToken st1 = scw.WriteKeyOpenSection(CfgKey.Create("Key"));
 			WriteSectionToken st2 = scw.WriteKeyOpenSection(CfgKey.Create("Key"));
-			Assert.Throws<InvalidOperationException>(() => st1.Close());
+			Assert.Throws<InvalidOperationException>(() => st1.Dispose());
 		}
 		[Fact]
 		public static void BadStateCloseSectionWithNestedValueListOutOfOrder()
@@ -93,7 +93,7 @@
 			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
 			WriteSectionToken st = scw.WriteKeyOpenSection(CfgKey.Create("Key"));
 			WriteValueListToken vlt = scw.WriteKeyOpenValueList(CfgKey.Create("Key"));
-			Assert.Throws<InvalidOperationException>(() => st.Close());
+			Assert.Throws<InvalidOperationException>(() => st.Dispose());
 		}
 	}
 }

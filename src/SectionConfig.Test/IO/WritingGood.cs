@@ -32,7 +32,7 @@
 				scw.WriteKey(CfgKey.Create("Key2"));
 				scw.WriteValue("Value2");
 				scw.WriteKeyValue(CfgKey.Create("Key3"), "Value3");
-				st.Close();
+				st.Dispose();
 			}
 			Assert.Equal("Section {\n\tKey1: Value1\n\tKey2: Value2\n\tKey3: Value3\n}\n", sw.ToString());
 		}
@@ -80,7 +80,7 @@
 				vl.WriteListValue("Value1");
 				vl.WriteListValue("#Value 2");
 				vl.WriteListValue("Value  3");
-				vl.Close();
+				vl.Dispose();
 				st.Close();
 			}
 			Assert.Equal("Section {\n\tKey1: {\n\t\tValue1\n\t\t\"#Value 2\"\n\t\tValue  3\n\t}\n}\n", sw.ToString());

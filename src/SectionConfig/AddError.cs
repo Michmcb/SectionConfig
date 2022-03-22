@@ -14,8 +14,8 @@
 		/// </summary>
 		KeyAlreadyExists,
 		/// <summary>
-		/// The <see cref="ICfgObject"/> added has already been added to a different <see cref="CfgSection"/>.
+		/// The <see cref="ICfgObject"/> added has already been added to a <see cref="CfgSection"/>.
 		/// </summary>
-		AlreadyHasDifferentParent,
+		AlreadyHasParent,
 	}
 }

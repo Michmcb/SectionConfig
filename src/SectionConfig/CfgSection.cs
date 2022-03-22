@@ -24,24 +24,6 @@
 			_elements = new(keyComparer);
 		}
 		/// <summary>
-		/// Creates a new instance with the specified <paramref name="key"/>, and the <see cref="Elements"/>
-		/// property will compare keys using <paramref name="keyComparer"/>.
-		/// Initializes <see cref="Elements"/> with copy of the keys and values from <paramref name="elements"/>.
-		/// </summary>
-		/// <param name="key"></param>
-		/// <param name="keyComparer"></param>
-		/// <param name="elements"></param>
-		public CfgSection(CfgKey key, IEqualityComparer<string> keyComparer, IReadOnlyDictionary<string, ICfgObject> elements)
-		{
-			Key = key;
-			hasParent = false;
-			_elements = new(keyComparer);
-			foreach (KeyValuePair<string, ICfgObject> kvp in elements)
-			{
-				_elements[kvp.Key] = kvp.Value;
-			}
-		}
-		/// <summary>
 		/// The key.
 		/// </summary>
 		public CfgKey Key { get; }
@@ -96,7 +78,7 @@
 		/// <returns>The result of trying to add the section.</returns>
 		public AddError TryAdd(CfgSection section)
 		{
-			if (section.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (section.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(section.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -115,7 +97,7 @@
 		/// <returns>The result of trying to add the value list.</returns>
 		public AddError TryAdd(CfgValueList list)
 		{
-			if (list.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (list.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(list.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -134,7 +116,7 @@
 		/// <returns>The result of trying to add the value.</returns>
 		public AddError TryAdd(CfgValue value)
 		{
-			if (value.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (value.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(value.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -244,6 +226,31 @@
 		public CfgValueList ToValueList()
 		{
 			throw new InvalidCastException("Requested " + nameof(CfgValueList) + " but this is a " + nameof(CfgSection));
+		}
+		/// <summary>
+		/// Searches down through <see cref="CfgSection"/>, and returns the <see cref="ICfgObject"/> found, if any.
+		/// For example if you pass [Section, Child], it would try to find "Section", and then if it that is a <see cref="CfgSection"/>, searches in that for something with the key "Child".
+		/// If <paramref name="keys"/> is empty, returns null.
+		/// </summary>
+		/// <param name="keys">The keys to search for.</param>
+		/// <returns>An <see cref="ICfgObject"/> if found, otherwise null.</returns>
+		public ICfgObject? Find(IEnumerable<string> keys)
+		{
+			ICfgObject? result = this;
+			foreach (string key in keys)
+			{
+				// To try and search for another child, the current object needs to be a section, and it needs to hold something with that key
+				// On the last iteration, it's fine if result is not a section
+				if (!result.IsSection(out CfgSection? sec) || !sec._elements.TryGetValue(key, out result))
+				{
+					// Either not a section or not found, so return null
+					return null;
+				}
+				// Otherwise we're all good, keep going
+			}
+			// If result is still equal to this, then that means we never iterated at all.
+			// To keep behaviour consistent with CfgRoot (which cannot return itself because it does not implement ICfgObject), we return null on an empty IEnumerable.
+			return result == this ? null : result;
 		}
 	}
 }

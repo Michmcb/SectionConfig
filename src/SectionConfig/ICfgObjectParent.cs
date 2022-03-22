@@ -47,20 +47,28 @@
 		/// </summary>
 		/// <param name="key">The key.</param>
 		/// <returns>The <see cref="CfgValue"/> or null if it does not exist or is not the correct type.</returns>
-		public CfgValue? TryGetValue(string key);
+		CfgValue? TryGetValue(string key);
 		/// <summary>
 		/// Returns a <see cref="CfgValueList"/> if <paramref name="key"/> exists in <see cref="Elements"/>, and it is a <see cref="CfgValueList"/>.
 		/// Otherwise, returns null.
 		/// </summary>
 		/// <param name="key">The key.</param>
 		/// <returns>The <see cref="CfgValueList"/> or null if it does not exist or is not the correct type.</returns>
-		public CfgValueList? TryGetValueList(string key);
+		CfgValueList? TryGetValueList(string key);
 		/// <summary>
 		/// Returns a <see cref="CfgSection"/> if <paramref name="key"/> exists in <see cref="Elements"/>, and it is a <see cref="CfgSection"/>.
 		/// Otherwise, returns null.
 		/// </summary>
 		/// <param name="key">The key.</param>
 		/// <returns>The <see cref="CfgSection"/> or null if it does not exist or is not the correct type.</returns>
-		public CfgSection? TryGetSection(string key);
+		CfgSection? TryGetSection(string key);
+		/// <summary>
+		/// Searches down through <see cref="CfgSection"/>, and returns the <see cref="ICfgObject"/> found, if any.
+		/// For example if you pass [Section, Child], it would try to find "Section", and then if it that is a <see cref="CfgSection"/>, searches in that for something with the key "Child".
+		/// If <paramref name="keys"/> is empty, returns null.
+		/// </summary>
+		/// <param name="keys">The keys to search for.</param>
+		/// <returns>An <see cref="ICfgObject"/> if found, otherwise null.</returns>
+		ICfgObject? Find(IEnumerable<string> keys);
 	}
 }

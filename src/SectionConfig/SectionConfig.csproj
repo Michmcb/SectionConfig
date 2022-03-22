@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>0.4</Version>
+    <Version>0.5</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -16,10 +16,9 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Fixed indentation bug when writing a comment
-- Unit test for loading, but we need to make a method for merging CfgRoot objects
-- CfgMerger that can merge many CfgRoots into a single, new CfgRoot
-- ValOrErr struct to replace LoadResult and such, and ErrMsg object to hold an error code and message
+    <PackageReleaseNotes>- Renamed AddError.AlreadyHasDifferentParent to just AddError.AlreadyHasParent, as the parent may not necessarily be a different object.
+- CfgMerger no longer accepts invalid enum values; it throws an ArgumentOutOfRangeException when trying to set an invalid value.
+- Find method added to ICfgObjectParent, to help with searching downwards through many keys to find a specific ICfgObject.
 	 </PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />

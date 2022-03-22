@@ -69,7 +69,7 @@
 		/// <returns>The result of trying to add the section.</returns>
 		public AddError TryAdd(CfgSection section)
 		{
-			if (section.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (section.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(section.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -88,7 +88,7 @@
 		/// <returns>The result of trying to add the value list.</returns>
 		public AddError TryAdd(CfgValueList list)
 		{
-			if (list.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (list.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(list.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -107,7 +107,7 @@
 		/// <returns>The result of trying to add the value.</returns>
 		public AddError TryAdd(CfgValue value)
 		{
-			if (value.hasParent) return AddError.AlreadyHasDifferentParent;
+			if (value.hasParent) return AddError.AlreadyHasParent;
 			if (_elements.ContainsKey(value.Key.KeyString))
 			{
 				return AddError.KeyAlreadyExists;
@@ -148,6 +148,34 @@
 		public CfgSection? TryGetSection(string key)
 		{
 			return Elements.TryGetValue(key, out ICfgObject? obj) ? obj.AsSection() : null;
+		}
+		/// <summary>
+		/// Searches down through <see cref="CfgSection"/>, and returns the <see cref="ICfgObject"/> found, if any.
+		/// For example if you pass [Section, Child], it would try to find "Section", and then if it that is a <see cref="CfgSection"/>, searches in that for something with the key "Child".
+		/// If <paramref name="keys"/> is empty, returns null.
+		/// </summary>
+		/// <param name="keys">The keys to search for.</param>
+		/// <returns>An <see cref="ICfgObject"/> if found, otherwise null.</returns>
+		public ICfgObject? Find(IEnumerable<string> keys)
+		{
+			using IEnumerator<string> enumerator = keys.GetEnumerator();
+			if (enumerator.MoveNext())
+			{
+				if (_elements.TryGetValue(enumerator.Current, out ICfgObject? result))
+				{
+					while (enumerator.MoveNext())
+					{
+						if (!result.IsSection(out CfgSection? sec) || !sec.Elements.TryGetValue(enumerator.Current, out result))
+						{
+							// Either not a section or not found, so return null
+							return null;
+						}
+					}
+					return result;
+				}
+				else return null;
+			}
+			else return null;
 		}
 	}
 }

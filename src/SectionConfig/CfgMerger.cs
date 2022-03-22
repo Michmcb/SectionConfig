@@ -9,6 +9,9 @@
 	/// </summary>
 	public sealed class CfgMerger
 	{
+		private MergeBehaviour sectionMerging;
+		private MergeBehaviour valueMerging;
+		private MergeBehaviour valueListMerging;
 		/// <summary>
 		/// Creates a new instance.
 		/// </summary>
@@ -20,9 +23,12 @@
 		public CfgMerger(IEqualityComparer<string> keyComparer, MergeBehaviour sectionMerging = MergeBehaviour.TakeBoth, MergeBehaviour valueMerging = MergeBehaviour.Fail, MergeBehaviour valueListMerging = MergeBehaviour.Fail, bool mergeValuesAndValueLists = false)
 		{
 			KeyComparer = keyComparer;
-			SectionMerging = sectionMerging;
-			ValueMerging = valueMerging;
-			ValueListMerging = valueListMerging;
+			if (IsInvalid(sectionMerging)) { throw new ArgumentOutOfRangeException(nameof(sectionMerging), "Not a valid enum value"); }
+			if (IsInvalid(valueMerging)) { throw new ArgumentOutOfRangeException(nameof(valueMerging), "Not a valid enum value"); }
+			if (IsInvalid(valueListMerging)) { throw new ArgumentOutOfRangeException(nameof(valueListMerging), "Not a valid enum value"); }
+			this.sectionMerging = sectionMerging;
+			this.valueMerging = valueMerging;
+			this.valueListMerging = valueListMerging;
 			MergeValuesAndValueLists = mergeValuesAndValueLists;
 		}
 		/// <summary>
@@ -35,21 +41,45 @@
 		/// <see cref="MergeBehaviour.TakeFirst"/> will only keep elements of the existing section.
 		/// <see cref="MergeBehaviour.TakeLast"/> will only keep elements of the incoming section.
 		/// </summary>
-		public MergeBehaviour SectionMerging { get; set; }
+		public MergeBehaviour SectionMerging
+		{
+			get => sectionMerging;
+			set
+			{
+				if (IsInvalid(value)) { throw new ArgumentOutOfRangeException(nameof(value), "Not a valid enum value"); }
+				sectionMerging = value;
+			}
+		}
 		/// <summary>
 		/// <see cref="MergeBehaviour.Fail"/> will cause a failure if a duplicate value is found.
 		/// <see cref="MergeBehaviour.TakeBoth"/> will change the values into a value list, which contains both values. If using this value, it's suggested to set <see cref="MergeValuesAndValueLists"/> to true.
 		/// <see cref="MergeBehaviour.TakeFirst"/> will keep the existing value.
 		/// <see cref="MergeBehaviour.TakeLast"/> will keep the incoming value.
 		/// </summary>
-		public MergeBehaviour ValueMerging { get; set; }
+		public MergeBehaviour ValueMerging
+		{
+			get => valueMerging;
+			set
+			{
+				if (IsInvalid(value)) { throw new ArgumentOutOfRangeException(nameof(value), "Not a valid enum value"); }
+				valueMerging = value;
+			}
+		}
 		/// <summary>
 		/// <see cref="MergeBehaviour.Fail"/> will cause a failure if a duplicate value is found.
 		/// <see cref="MergeBehaviour.TakeBoth"/> adds the values in the incoming list to the existing list.
 		/// <see cref="MergeBehaviour.TakeFirst"/> will keep the existing value list.
 		/// <see cref="MergeBehaviour.TakeLast"/> will keep the incoming value list.
 		/// </summary>
-		public MergeBehaviour ValueListMerging { get; set; }
+		public MergeBehaviour ValueListMerging
+		{
+			get => valueListMerging;
+			set
+			{
+				if (IsInvalid(value)) { throw new ArgumentOutOfRangeException(nameof(value), "Not a valid enum value"); }
+				valueListMerging = value;
+			}
+		}
 		/// <summary>
 		/// If true, then any values found that conflict with a value list will be added to the value list.
 		/// This is useful when <see cref="ValueMerging"/> is set to <see cref="MergeBehaviour.TakeBoth"/>.
@@ -193,7 +223,7 @@
 					{
 						case MergeBehaviour.Fail:
 							return new(MergeError.DuplicateValueList, string.Concat("Merging the duplicate value list with key ", existing.Key.KeyString, " failed because no duplicates are allowed"));
-						case MergeBehaviour.TakeFirst: 
+						case MergeBehaviour.TakeFirst:
 							return default;
 						case MergeBehaviour.TakeLast:
 							target.Remove(existing.Key);
@@ -231,6 +261,17 @@
 					}
 				default: throw new InvalidOperationException(string.Concat("The key ", existing.Key.KeyString, " has an invalid " + nameof(CfgType)));
 			}
+		}
+		private static bool IsInvalid(MergeBehaviour mb)
+		{
+			return mb switch
+			{
+				MergeBehaviour.Fail => false,
+				MergeBehaviour.TakeFirst => false,
+				MergeBehaviour.TakeLast => false,
+				MergeBehaviour.TakeBoth => false,
+				_ => true,
+			};
 		}
 	}
 }

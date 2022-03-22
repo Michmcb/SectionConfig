@@ -9,7 +9,7 @@
 	/// </summary>
 	public sealed class CfgLoader
 	{
-		// TODO make async variations of these
+		// TODO make async variations of Cfg loading
 
 		/// <summary>
 		/// Loads section config data from the file at <paramref name="path"/>, reading using the <paramref name="encoding"/>.

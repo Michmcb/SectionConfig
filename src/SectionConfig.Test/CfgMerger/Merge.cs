@@ -190,6 +190,7 @@
 			ErrMsg<MergeError> error = m.MergeAll(r1, r2, r3).ErrorOrException();
 			Assert.Equal(MergeError.DuplicateSection, error.Code);
 			Assert.Equal("Merging the duplicate section with key Section failed because no duplicates are allowed", error.Message);
+			Assert.Equal("Merging the duplicate section with key Section failed because no duplicates are allowed", error.ToString());
 		}
 		[Fact]
 		public static void ValueConflictTakeBoth_CollectLists()
@@ -202,7 +203,7 @@
 			r1.TryAdd(new CfgValue(CfgKey.Create("Key2"), "Value2"));
 
 			r2.TryAdd(new CfgValue(CfgKey.Create("Key1"), "Value3"));
-			r2.TryAdd(new CfgValue(CfgKey.Create("Key2"), "Value4"));
+			r2.TryAdd(new CfgValueList(CfgKey.Create("Key2"), new string[] { "Value4" }));
 
 			r3.TryAdd(new CfgValue(CfgKey.Create("Key1"), "Value5"));
 			r3.TryAdd(new CfgValue(CfgKey.Create("Key2"), "Value6"));
@@ -441,6 +442,31 @@
 			ErrMsg<MergeError> error = m.MergeAll(r1, r2, r3).ErrorOrException();
 			Assert.Equal(MergeError.DuplicateValueList, error.Code);
 			Assert.Equal("Merging the duplicate value list with key Key1 failed because no duplicates are allowed", error.Message);
+		}
+		[Fact]
+		public static void InvalidEnumValues()
+		{
+			Assert.Throws<ArgumentOutOfRangeException>(() => new CfgMerger(StringComparer.Ordinal, (MergeBehaviour)999, MergeBehaviour.Fail, MergeBehaviour.Fail, false));
+			Assert.Throws<ArgumentOutOfRangeException>(() => new CfgMerger(StringComparer.Ordinal, MergeBehaviour.TakeBoth, (MergeBehaviour)999, MergeBehaviour.Fail, false));
+			Assert.Throws<ArgumentOutOfRangeException>(() => new CfgMerger(StringComparer.Ordinal, MergeBehaviour.TakeBoth, MergeBehaviour.Fail, (MergeBehaviour)999, false));
+
+			CfgMerger m = new(StringComparer.Ordinal, MergeBehaviour.TakeBoth, MergeBehaviour.Fail, MergeBehaviour.Fail, false);
+			Assert.Throws<ArgumentOutOfRangeException>(() => m.SectionMerging = (MergeBehaviour)999);
+			Assert.Throws<ArgumentOutOfRangeException>(() => m.ValueMerging = (MergeBehaviour)999);
+			Assert.Throws<ArgumentOutOfRangeException>(() => m.ValueListMerging = (MergeBehaviour)999);
+
+			
+		}
+		[Fact]
+		public static void Properties()
+		{
+			CfgMerger m = new(StringComparer.Ordinal, MergeBehaviour.Fail, MergeBehaviour.Fail, MergeBehaviour.Fail, false);
+			m.SectionMerging = MergeBehaviour.TakeBoth;
+			m.ValueMerging = MergeBehaviour.TakeFirst;
+			m.ValueListMerging = MergeBehaviour.TakeLast;
+			Assert.Equal(MergeBehaviour.TakeBoth, m.SectionMerging);
+			Assert.Equal(MergeBehaviour.TakeFirst, m.ValueMerging);
+			Assert.Equal(MergeBehaviour.TakeLast, m.ValueListMerging);
 		}
 	}
 }

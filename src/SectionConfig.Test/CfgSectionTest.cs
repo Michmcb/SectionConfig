@@ -108,14 +108,17 @@
 			Assert.NotNull(sec.TryGetValue("1"));
 			Assert.Null(sec.TryGetValue("2"));
 			Assert.Null(sec.TryGetValue("3"));
+			Assert.Null(sec.TryGetValue("4"));
 
 			Assert.Null(sec.TryGetValueList("1"));
 			Assert.NotNull(sec.TryGetValueList("2"));
 			Assert.Null(sec.TryGetValueList("3"));
+			Assert.Null(sec.TryGetValueList("4"));
 
 			Assert.Null(sec.TryGetSection("1"));
 			Assert.Null(sec.TryGetSection("2"));
 			Assert.NotNull(sec.TryGetSection("3"));
+			Assert.Null(sec.TryGetSection("4"));
 		}
 		[Fact]
 		public static void Find_NullEmptyKeys()
@@ -131,6 +134,15 @@
 
 			Assert.Equal(AddError.Ok, s.TryAdd(new CfgSection(CfgKey.Create("1"), StringComparer.Ordinal)));
 			Assert.Null(s.Find(new string[] { "1", "2", "3" }));
+		}
+		[Fact]
+		public static void Find_FoundButWrongType()
+		{
+			CfgSection s = new(CfgKey.Create("Section"), StringComparer.Ordinal);
+			Assert.Equal(AddError.Ok, s.TryAdd(new CfgSection(CfgKey.Create("1"), StringComparer.Ordinal)));
+			Assert.Equal(AddError.Ok, s.Elements["1"].ToSection().TryAdd(new CfgValue(CfgKey.Create("Value"), "Val")));
+
+			Assert.Null(s.Find(new string[] { "1", "Value", "Value2" }));
 		}
 		[Fact]
 		public static void Find_Found()

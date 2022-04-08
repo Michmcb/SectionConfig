@@ -14,7 +14,6 @@
 			InvalidCfgKeyException ex2 = new("msg");
 			InvalidCfgKeyException ex3 = new("msg", inner);
 
-
 			Assert.Equal("Exception of type 'SectionConfig.IO.InvalidCfgKeyException' was thrown.", ex1.Message);
 			Assert.Null(ex1.InnerException);
 

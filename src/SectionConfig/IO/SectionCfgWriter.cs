@@ -151,11 +151,11 @@
 			}
 		}
 		/// <summary>
-		/// Equivalent to calling <see cref="WriteKey(CfgKey)"/> followed by <see cref="WriteValue(in ReadOnlySpan{char})"/>.
+		/// Equivalent to calling <see cref="WriteKey(CfgKey)"/> followed by <see cref="WriteValue(ReadOnlySpan{char})"/>.
 		/// </summary>
 		/// <param name="key">The key to write.</param>
 		/// <param name="val">The value to write.</param>
-		public void WriteKeyValue(CfgKey key, in ReadOnlySpan<char> val)
+		public void WriteKeyValue(CfgKey key, ReadOnlySpan<char> val)
 		{
 			WriteKey(key);
 			WriteValue(val);
@@ -199,7 +199,7 @@
 		/// There are no invalid values for <paramref name="val"/>.
 		/// </summary>
 		/// <param name="val">The value to write.</param>
-		public void WriteValue(in ReadOnlySpan<char> val)
+		public void WriteValue(ReadOnlySpan<char> val)
 		{
 			if (State != StreamState.AfterKey)
 			{
@@ -302,7 +302,7 @@
 			tokenIds.Push(id);
 			return new(this, id);
 		}
-		internal void WriteListValue(in ReadOnlySpan<char> val)
+		internal void WriteListValue(ReadOnlySpan<char> val)
 		{
 			if (State != StreamState.List)
 			{
@@ -366,7 +366,7 @@
 			--SectionLevel;
 			State = StreamState.Start;
 		}
-		private void WriteRawQuoted(in ReadOnlySpan<char> val, Quoting quoting)
+		private void WriteRawQuoted(ReadOnlySpan<char> val, Quoting quoting)
 		{
 			char q = quoting switch
 			{
@@ -381,7 +381,7 @@
 			}
 			Writer.Write(q);
 		}
-		private void WriteRawMultiline(in ReadOnlySpan<char> val, int indentationLevel)
+		private void WriteRawMultiline(ReadOnlySpan<char> val, int indentationLevel)
 		{
 			for (int i = 0; i < val.Length; i++)
 			{
@@ -441,6 +441,7 @@
 		/// </summary>
 		public void Dispose()
 		{
+			State = StreamState.End;
 			if (CloseOutput)
 			{
 				Writer.Dispose();

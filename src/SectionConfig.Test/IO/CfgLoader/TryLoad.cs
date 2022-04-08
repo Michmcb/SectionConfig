@@ -58,7 +58,7 @@
 		[Fact]
 		public static void WorksFineStreamReader()
 		{
-			using StreamReader tr = new (new MemoryStream(Encoding.UTF8.GetBytes ("Section{Key:Value\n}")), Encoding.UTF8);
+			using StreamReader tr = new (new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
 			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, StringComparer.Ordinal);
 			Assert.NotNull(result.Value);
 
@@ -75,6 +75,30 @@
 
 			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
 			Assert.Equal("Duplicate key \"Section:Section2:Key\" was found", result.Error.Message);
+		}
+		[Fact]
+		public static void MalformedStream()
+		{
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{"));
+			Assert.Null(result.Value);
+			Assert.Equal(LoadError.MalformedStream, result.Error.Code);
+			Assert.Equal("Found end of stream when there were still 1 sections to close", result.Error.Message);
+		}
+		[Fact]
+		public static void DuplicateKeyList()
+		{
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key:{}Key:{}"));
+			Assert.Null(result.Value);
+			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
+			Assert.Equal("Duplicate key \":Key\" was found", result.Error.Message);
+		}
+		[Fact]
+		public static void DuplicateKeySection()
+		{
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{}Key{}"));
+			Assert.Null(result.Value);
+			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
+			Assert.Equal("Duplicate key \":Key\" was found", result.Error.Message);
 		}
 	}
 }

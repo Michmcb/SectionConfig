@@ -3,6 +3,8 @@
 	using SectionConfig;
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics.CodeAnalysis;
+	using System.Reflection;
 	using Xunit;
 
 	public static class Merge
@@ -455,7 +457,41 @@
 			Assert.Throws<ArgumentOutOfRangeException>(() => m.ValueMerging = (MergeBehaviour)999);
 			Assert.Throws<ArgumentOutOfRangeException>(() => m.ValueListMerging = (MergeBehaviour)999);
 
-			
+			// It's not really possible to set them to something invalid then try to merge, but we'll hack it with reflection and set them just to make it fail during a merge
+
+			Type typeCfgMerger = typeof(CfgMerger);
+			FieldInfo? field = typeCfgMerger.GetField("sectionMerging", BindingFlags.NonPublic | BindingFlags.Instance);
+			Assert.NotNull(field);
+			field!.SetValue(m, 100);
+
+			CfgRoot r1 = new(StringComparer.Ordinal);
+			CfgRoot r2 = new(StringComparer.Ordinal);
+
+			CfgSection s = new(CfgKey.Create("Section"), StringComparer.Ordinal);
+			s.TryAdd(new CfgValue(CfgKey.Create("Key1"), "Value1"));
+			s.TryAdd(new CfgValueList(CfgKey.Create("Key2"), new string[] { "Value2" }));
+			r1.TryAdd(s);
+
+			s = new(CfgKey.Create("Section"), StringComparer.Ordinal);
+			s.TryAdd(new CfgValue(CfgKey.Create("Key1"), "Value3"));
+			s.TryAdd(new CfgValueList(CfgKey.Create("Key2"), new string[] { "Value4" }));
+			r2.TryAdd(s);
+
+			Assert.Throws<InvalidOperationException>(() => m.MergeAll(r1, r2));
+
+			m.SectionMerging = MergeBehaviour.TakeBoth;
+			field = typeCfgMerger.GetField("valueMerging", BindingFlags.NonPublic | BindingFlags.Instance);
+			Assert.NotNull(field);
+			field!.SetValue(m, 100);
+
+			Assert.Throws<InvalidOperationException>(() => m.MergeAll(r1, r2));
+
+			m.ValueMerging = MergeBehaviour.TakeBoth;
+			field = typeCfgMerger.GetField("valueListMerging", BindingFlags.NonPublic | BindingFlags.Instance);
+			Assert.NotNull(field);
+			field!.SetValue(m, 100);
+
+			Assert.Throws<InvalidOperationException>(() => m.MergeAll(r1, r2));
 		}
 		[Fact]
 		public static void Properties()

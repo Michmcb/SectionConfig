@@ -43,6 +43,7 @@ List:{
 }
 ";
 			// TODO have to decide how we're going to have the ability to have a multiline string within a string list
+			// TODO It would be nice if we write a Key without any value on that line, we interpret that line as being an empty value, instead of interpreting the following lines as a multi-line string. This would mean enforcing that multi-line strings MUST be indented more than the Key was, which is not terribly difficult to do. We just need to change the check to say the indentation has to start with the Key's indentation, AND the indentation has to be longer than the Key's indentation.
 
 			// This is how YAML does it. Basically each string is an item in a sequence, and the multiline string specifies > (multiline string). it's >- cause the library meant "block chomping".
 			/*
@@ -179,7 +180,7 @@ List:{
 		[Fact]
 		public static void EmptyValueDoubleQuoted()
 		{
-			string s = "Key:\"\"";
+			string s = "\nKey:\"\"";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -194,6 +195,30 @@ List:{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
 					new KeyValuePair<string, string>("Key", "")
+				);
+			}
+		}
+		[Fact]
+		public static void KeyQuotedValueThenKeyUnquoted()
+		{
+			string s = "Key1:'Value1'\nKey2:Value2";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(CfgKey.Create("Key1")),
+					new(SectionCfgToken.Value, "Value1"),
+					new(CfgKey.Create("Key2")),
+					new(SectionCfgToken.Value, "Value2"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", "Value1"),
+					new KeyValuePair<string, string>("Key2", "Value2")
 				);
 			}
 		}
@@ -699,7 +724,7 @@ List:{
 		[Fact]
 		public static void List()
 		{
-			string s = "Section{Key:{One\n#Comment\nTwo\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
+			string s = "Section{Key :{One\n#Comment\nTwo\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]

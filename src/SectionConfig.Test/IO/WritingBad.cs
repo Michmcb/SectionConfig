@@ -31,6 +31,23 @@
 			Assert.Throws<InvalidCfgKeyException>(() => CfgKey.Create(":"));
 		}
 		[Fact]
+		public static void CantWriteAfterDisposal()
+		{
+			SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
+			scw.Dispose();
+			Assert.Throws<InvalidOperationException>(() => scw.WriteKey(default));
+			Assert.Throws<InvalidOperationException>(() => scw.WriteValue(default));
+			Assert.Throws<InvalidOperationException>(() => scw.WriteComment(default));
+			Assert.Throws<InvalidOperationException>(() => scw.WriteKeyOpenSection(default));
+			Assert.Throws<InvalidOperationException>(() => scw.WriteKeyOpenValueList(default));
+			Assert.Throws<InvalidOperationException>(() => scw.WriteKeyValue(default, default));
+		}
+		[Fact]
+		public static void BadIndentation()
+		{
+			Assert.Throws<ArgumentException>(() => new SectionCfgWriter(StreamWriter.Null, indentation: "abc".AsMemory(), newLine: NewLine.Lf));
+		}
+		[Fact]
 		public static void BadStateKey()
 		{
 			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
@@ -72,6 +89,15 @@
 			Assert.Throws<InvalidOperationException>(() => vlt.Dispose());
 		}
 		[Fact]
+		public static void BadStateCloseListOutOfOrder()
+		{
+			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
+			WriteValueListToken vlt1 = scw.WriteKeyOpenValueList(CfgKey.Create("Key"));
+			vlt1.Close();
+			WriteValueListToken vlt2 = scw.WriteKeyOpenValueList(CfgKey.Create("Key"));
+			Assert.Throws<InvalidOperationException>(() => vlt1.Dispose());
+		}
+		[Fact]
 		public static void BadStateCloseSectionTwice()
 		{
 			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
@@ -94,6 +120,15 @@
 			WriteSectionToken st = scw.WriteKeyOpenSection(CfgKey.Create("Key"));
 			WriteValueListToken vlt = scw.WriteKeyOpenValueList(CfgKey.Create("Key"));
 			Assert.Throws<InvalidOperationException>(() => st.Dispose());
+		}
+		[Fact]
+		public static void TryToCloseValueListWithWrongToken()
+		{
+			using SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
+			WriteValueListToken vlt1 = scw.WriteKeyOpenValueList(CfgKey.Create("Key1"));
+			vlt1.Close();
+			WriteValueListToken vlt2 = scw.WriteKeyOpenValueList(CfgKey.Create("Key2"));
+			Assert.Throws<InvalidOperationException>(() => vlt1.Close());
 		}
 	}
 }

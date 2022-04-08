@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>0.5</Version>
+    <Version>0.6</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -16,10 +16,11 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Renamed AddError.AlreadyHasDifferentParent to just AddError.AlreadyHasParent, as the parent may not necessarily be a different object.
-- CfgMerger no longer accepts invalid enum values; it throws an ArgumentOutOfRangeException when trying to set an invalid value.
-- Find method added to ICfgObjectParent, to help with searching downwards through many keys to find a specific ICfgObject.
-	 </PackageReleaseNotes>
+    <PackageReleaseNotes>- Fixed a bug where reading a duplicate key for a section would cause an InvalidCastException instead of an error message
+- Fixed a bug where encountering the end of a stream while reading a value list would cause the State to not be set to Error correctly
+- The error message for keys read from a stream with invalid characters will now rpeort the full key name, instead of only the valid portion plus 1 invalid character
+- FluentSectionCfgWriter added, to allow for easily writing a file
+- More unit tests, 99.1% coverage now</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

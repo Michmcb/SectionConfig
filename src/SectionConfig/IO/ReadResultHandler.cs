@@ -65,7 +65,6 @@
 					CfgSection newSection = new(key, root.KeyComparer);
 					if (section.TryAdd(newSection) != AddError.Ok)
 					{
-						parentSections.Push(section);
 						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
 						return true;
 					}
@@ -86,7 +85,6 @@
 
 			static string DuplicateKeyErrorMsg(Stack<ICfgObjectParent> parentSections, string currentKey)
 			{
-				// The bottom object in the stack is always the CfgRoot object.
 				// And, we want to write things in order of bottom to top.
 				// So, we reverse the iteration order, then skip the first object, which will be the CfgRoot object.
 				// Then we only have the CfgSections left and can join them all together, and append the current key onto the end.

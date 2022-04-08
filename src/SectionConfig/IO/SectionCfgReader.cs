@@ -64,6 +64,7 @@
 							// Don't care if it's the end of the stream
 							return ReadComment();
 						case CfgSyntax.EndSectionOrList:
+							// We don't update the state, because after closing the section we're back in Start state again, ready for another end section/list or key or comment.
 							return --SectionLevel >= 0
 								? new(SectionCfgToken.EndSection)
 								: Error("Found section close when there was no section to close");
@@ -107,16 +108,16 @@
 					State = StreamState.Start;
 					++SectionLevel;
 					return new(SectionCfgToken.StartSection);
-				case StreamState.SectionClose:
-					State = StreamState.Start;
-					--SectionLevel;
-					return new(SectionCfgToken.EndSection);
+				// We should actually never wind up at this point since we never set the state to SectionClose.
+				//case StreamState.SectionClose:
+				//	State = StreamState.Start;
+				//	--SectionLevel;
+				//	return new(SectionCfgToken.EndSection);
 				case StreamState.List:
-					c = NextNonWhitespaceChar(/*whitespace = new()*/);
-					//c = nsc2.Next;
+					c = NextNonWhitespaceChar();
 					if (!c.HasValue)
 					{
-						return new(SectionCfgToken.Error, "Encountered end of stream when trying to read List Values");
+						return Error("Encountered end of stream when trying to read List Values");
 					}
 					switch (c.Value)
 					{
@@ -137,9 +138,8 @@
 							return new(SectionCfgToken.ListValue, ReadTrimmedLine(c.Value));
 					}
 				case StreamState.End:
-					return SectionLevel == 0
-						? new(SectionCfgToken.End, string.Empty)
-						: Error(string.Concat("Found end of stream when there were still ", SectionLevel.ToString(), " sections to close"));
+					// We never allow setting the state to the end of stream unless SectionLevel is 0.
+					return new(SectionCfgToken.End, string.Empty);
 				default:
 				case StreamState.Error:
 					return new(SectionCfgToken.Error, "Encountered error, cannot read further");
@@ -176,7 +176,7 @@
 		private static string TrimEndStringBuilder(StringBuilder sb)
 		{
 			int i = sb.Length - 1;
-			for (; i > 0 && char.IsWhiteSpace(sb[i]); --i) { }
+			for (; i > 0 && char.IsWhiteSpace(sb[i]); --i) ;
 			return sb.ToString(0, i + 1);
 		}
 		/// <summary>
@@ -215,13 +215,8 @@
 							State = StreamState.AfterKey;
 							go = false;
 							break;
-						case '\n':
-						case '\r':
-						case CfgSyntax.Comment:
-						case CfgSyntax.EndSectionOrList:
-							errMsg = string.Concat("Encountered an invalid character (", c, ") in the middle of Key " + sb.ToString());
-							return null;
 						default:
+							// Allow invalid characters for a more descriptive error message later on
 							sb.Append(c);
 							break;
 					}
@@ -294,7 +289,7 @@
 		/// <param name="sb">Used to build the string.</param>
 		/// <param name="indentation">The indentation at the start of a line that is used to identify the string is still going.</param>
 		/// <returns>The string, including any trailing whitespace.</returns>
-		private string ReadUnquotedMultilineString(StringBuilder sb, in ReadOnlySpan<char> indentation)
+		private string ReadUnquotedMultilineString(StringBuilder sb, ReadOnlySpan<char> indentation)
 		{
 			Debug.Assert(indentation.Length != 0, "Multiline strings always have indentation, so if there's none it should be read as a single-line string");
 			bool go = true;
@@ -410,6 +405,8 @@
 		private NextSignificantChar NextNonWhitespaceChar(StringBuilder whitespace)
 		{
 			bool b = false;
+			// It isn't possible for lastChar to be non-null (\0), because we only ever call this method directly after it gets set back to \0.
+			// This leaves a gap in our test coverage, unfortunately. It would be nice if we could modify the code a bit so we can eliminate this check with total confidence.
 			if (lastChar != '\0')
 			{
 				char c = lastChar;

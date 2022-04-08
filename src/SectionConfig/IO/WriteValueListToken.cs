@@ -25,7 +25,7 @@
 		/// Writes a value to the list.
 		/// </summary>
 		/// <param name="val">The value to write.</param>
-		public void WriteListValue(in ReadOnlySpan<char> val)
+		public void WriteListValue(ReadOnlySpan<char> val)
 		{
 			writer.WriteListValue(val);
 		}

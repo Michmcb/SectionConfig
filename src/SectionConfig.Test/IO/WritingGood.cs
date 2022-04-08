@@ -1,16 +1,28 @@
 ﻿namespace SectionConfig.Test.IO
 {
 	using SectionConfig.IO;
+	using System;
 	using System.IO;
+	using System.Text;
 	using Xunit;
 	public static class WritingGood
 	{
 		private static readonly CfgKey key = CfgKey.Create("Key");
 		[Fact]
+		public static void PathCtor()
+		{
+			using SectionCfgWriter scw = new("File.scfg", append: true, Encoding.UTF8);
+			StreamWriter writer = Assert.IsType<StreamWriter>(scw.Writer);
+			FileStream fs = Assert.IsType<FileStream>(writer.BaseStream);
+			Assert.Equal(Encoding.UTF8, writer.Encoding);
+			Assert.Equal("File.scfg", Path.GetFileName(fs.Name));
+		}
+		[Fact]
 		public static void KeyValues()
 		{
 			using StringWriter sw = new();
-			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf))
+			SectionCfgWriter scw = new(sw, newLine: NewLine.Lf);
+			using (scw)
 			{
 				scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
 				scw.WriteKey(CfgKey.Create("Key2"));
@@ -20,12 +32,13 @@
 				scw.WriteKeyValue(CfgKey.Create("Key5"), "Value5\nValue 5 still");
 			}
 			Assert.Equal("Key1: Value1\nKey2: \"\"\"Value2\"\"\"\nKey3: \"'Value3'\"\nKey4: \"  Value4  \"\nKey5:\n\tValue5\n\tValue 5 still\n", sw.ToString());
+			Assert.Equal(StreamState.End, scw.State);
 		}
 		[Fact]
-		public static void SectionKeyValue()
+		public static void SectionKeyValueWithSpaces()
 		{
 			using StringWriter sw = new();
-			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf))
+			using (SectionCfgWriter scw = new(sw, indentation: "    ".AsMemory(), newLine: NewLine.Lf))
 			{
 				WriteSectionToken st = scw.WriteKeyOpenSection(CfgKey.Create("Section"));
 				scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
@@ -34,7 +47,7 @@
 				scw.WriteKeyValue(CfgKey.Create("Key3"), "Value3");
 				st.Dispose();
 			}
-			Assert.Equal("Section {\n\tKey1: Value1\n\tKey2: Value2\n\tKey3: Value3\n}\n", sw.ToString());
+			Assert.Equal("Section {\n    Key1: Value1\n    Key2: Value2\n    Key3: Value3\n}\n", sw.ToString());
 		}
 		[Fact]
 		public static void NestedSectionKeyValue()
@@ -84,6 +97,53 @@
 				st.Close();
 			}
 			Assert.Equal("Section {\n\tKey1: {\n\t\tValue1\n\t\t\"#Value 2\"\n\t\tValue  3\n\t}\n}\n", sw.ToString());
+		}
+		[Fact]
+		public static void CrLf()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.CrLf))
+			{
+				scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
+				scw.WriteKeyValue(CfgKey.Create("Key2"), "Value2");
+			}
+			Assert.Equal("Key1: Value1\r\nKey2: Value2\r\n", sw.ToString());
+		}
+		[Fact]
+		public static void PlatformLines()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Platform))
+			{
+				Assert.Equal(Environment.NewLine.AsMemory(), scw.NewLine);
+				scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
+				scw.WriteKeyValue(CfgKey.Create("Key2"), "Value2");
+			}
+			Assert.Equal("Key1: Value1" + Environment.NewLine + "Key2: Value2" + Environment.NewLine, sw.ToString());
+		}
+		[Fact]
+		public static void QuotingListValue()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				WriteValueListToken wvlt = scw.WriteKeyOpenValueList(key);
+				wvlt.WriteListValue("Value\nValue");
+				wvlt.Close();
+			}
+			Assert.Equal("Key: {\n\t'Value\nValue'\n}\n", sw.ToString());
+		}
+		[Fact]
+		public static void SingleQuotesToMaintainWhitespace()
+		{
+			using StringWriter sw = new();
+			using (SectionCfgWriter scw = new(sw, newLine: NewLine.Lf, quoting: Quoting.SingleIfNeeded, multiline: Multiline.Auto))
+			{
+				scw.WriteKeyValue(key, "");
+				scw.WriteKeyValue(key, " value");
+				scw.WriteKeyValue(key, "value ");
+			}
+			Assert.Equal("Key: ''\nKey: ' value'\nKey: 'value '\n", sw.ToString());
 		}
 		[Fact]
 		public static void DoubleQuotesIfNeededAutoMultiline()

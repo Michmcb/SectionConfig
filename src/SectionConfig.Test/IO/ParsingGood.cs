@@ -65,33 +65,27 @@ List:{
 			 */
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey s1 = CfgKey.Create("Section");
+				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key 1")),
-					new(SectionCfgToken.Value, "Blah"),
-					new(CfgKey.Create("Key 2")),
-					new(SectionCfgToken.Value, "Blah"),
-					new(SectionCfgToken.Comment, " Some comment   "),
-					new(CfgKey.Create("Key3")),
-					new(SectionCfgToken.Value, "Blah"),
-					new(CfgKey.Create("Key 4")),
-					new(SectionCfgToken.Value, "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
-					new(CfgKey.Create("Key 5")),
-					new(SectionCfgToken.Value, "Misaligned, but still\na multiline value."),
-					new(CfgKey.Create("Section")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "Also a multiline string\n\t\tIt just keeps going too"),
-					new(SectionCfgToken.EndSection),
-					new(CfgKey.Create("List")),
-					new(SectionCfgToken.StartList),
-					new(SectionCfgToken.ListValue, "String 1"),
-					new(SectionCfgToken.ListValue, "String 2"),
-					new(SectionCfgToken.Comment, " A comment"),
-					new(SectionCfgToken.ListValue, "String 3"),
-					new(SectionCfgToken.ListValue, "String\n\t4"),
-					new(SectionCfgToken.ListValue, "String\n\t5"),
-					new(SectionCfgToken.EndList),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Blah"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Blah"),
+					new(SectionCfgToken.Comment, default, " Some comment   "),
+					new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Blah"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 4"), "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Misaligned, but still\na multiline value."),
+					new(SectionCfgToken.StartSection, s1),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Also a multiline string\n\t\tIt just keeps going too"),
+					new(SectionCfgToken.EndSection, s1),
+					new(SectionCfgToken.StartList, l1),
+					new(SectionCfgToken.ListValue, l1, "String 1"),
+					new(SectionCfgToken.ListValue, l1, "String 2"),
+					new(SectionCfgToken.Comment, default, " A comment"),
+					new(SectionCfgToken.ListValue, l1, "String 3"),
+					new(SectionCfgToken.ListValue, l1, "String\n\t4"),
+					new(SectionCfgToken.ListValue, l1, "String\n\t5"),
+					new(SectionCfgToken.EndList, l1),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -143,8 +137,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -164,8 +157,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -185,8 +177,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -206,10 +197,8 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key1")),
-					new(SectionCfgToken.Value, "Value1"),
-					new(CfgKey.Create("Key2")),
-					new(SectionCfgToken.Value, "Value2"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "Value1"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "Value2"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -230,7 +219,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(SectionCfgToken.Comment, ""),
+					new(SectionCfgToken.Comment, default, ""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -248,8 +237,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "\""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "\""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -269,8 +257,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "'"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "'"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -290,8 +277,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "Value"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -311,9 +297,8 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "Value"),
-					new(SectionCfgToken.Comment, "Explanation"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
+					new(SectionCfgToken.Comment, default, "Explanation"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -333,8 +318,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "#This is a very important string!"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "#This is a very important string!"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -354,8 +338,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "Value"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -375,8 +358,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "'Value's all good!'"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "'Value's all good!'"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -396,8 +378,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "\"Value \"is\" all good!\""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "\"Value \"is\" all good!\""),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -417,12 +398,9 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key 1")),
-					new(SectionCfgToken.Value, "Value1"),
-					new(CfgKey.Create("Key 2")),
-					new(SectionCfgToken.Value, "Value 2"),
-					new(CfgKey.Create("Key 3")),
-					new(SectionCfgToken.Value, "Value 3"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Value1"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Value 2"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 3"), "Value 3"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -444,8 +422,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans many lines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -466,8 +443,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans many lines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -488,8 +464,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans many lines\n"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines\n"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -509,8 +484,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\r\nspans many lines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\nspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -530,8 +504,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\r\nspans many lines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\nspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -554,8 +527,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\r\tspans many lines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\tspans many lines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -578,8 +550,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\r\tspans many lines\r"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\tspans many lines\r"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -599,8 +570,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans\r\tmany\r\nlines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans\r\tmany\r\nlines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -620,8 +590,7 @@ List:{
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.Value, "This value\nspans many\n\tlines"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many\n\tlines"),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -639,11 +608,11 @@ List:{
 			string s = "Section{}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey k1 = CfgKey.Create("Section");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Section")),
-					new(SectionCfgToken.StartSection),
-					new(SectionCfgToken.EndSection),
+					new(SectionCfgToken.StartSection, k1, string.Empty),
+					new(SectionCfgToken.EndSection, k1, string.Empty),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -660,20 +629,20 @@ List:{
 			string s = "Section1{Section2{Section3{Section4{}}}}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey s1 = CfgKey.Create("Section1");
+				CfgKey s2 = CfgKey.Create("Section2");
+				CfgKey s3 = CfgKey.Create("Section3");
+				CfgKey s4 = CfgKey.Create("Section4");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Section1")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Section2")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Section3")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Section4")),
-					new(SectionCfgToken.StartSection),
-					new(SectionCfgToken.EndSection),
-					new(SectionCfgToken.EndSection),
-					new(SectionCfgToken.EndSection),
-					new(SectionCfgToken.EndSection),
+					new(SectionCfgToken.StartSection, s1, string.Empty),
+					new(SectionCfgToken.StartSection, s2, string.Empty),
+					new(SectionCfgToken.StartSection, s3, string.Empty),
+					new(SectionCfgToken.StartSection, s4, string.Empty),
+					new(SectionCfgToken.EndSection, s4, string.Empty),
+					new(SectionCfgToken.EndSection, s3, string.Empty),
+					new(SectionCfgToken.EndSection, s2, string.Empty),
+					new(SectionCfgToken.EndSection, s1, string.Empty),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -696,17 +665,14 @@ List:{
 			string s = "Section{Key1:Value1\nKey2:Value2\nKey3:Value3\n}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey s1 = CfgKey.Create("Section");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Section")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Key1")),
-					new(SectionCfgToken.Value, "Value1"),
-					new(CfgKey.Create("Key2")),
-					new(SectionCfgToken.Value, "Value2"),
-					new(CfgKey.Create("Key3")),
-					new(SectionCfgToken.Value, "Value3"),
-					new(SectionCfgToken.EndSection),
+					new(SectionCfgToken.StartSection, s1, string.Empty),
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "Value1"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "Value2"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Value3"),
+					new(SectionCfgToken.EndSection, s1, string.Empty),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -727,20 +693,20 @@ List:{
 			string s = "Section{Key :{One\n#Comment\nTwo\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey s1 = CfgKey.Create("Section");
+				CfgKey l1 = CfgKey.Create("Key");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Section")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("Key")),
-					new(SectionCfgToken.StartList),
-					new(SectionCfgToken.ListValue, "One"),
-					new(SectionCfgToken.Comment, "Comment"),
-					new(SectionCfgToken.ListValue, "Two"),
-					new(SectionCfgToken.ListValue, "Three\nThree"),
-					new(SectionCfgToken.Comment, "CommentAgain"),
-					new(SectionCfgToken.ListValue, "Heyyyy"),
-					new(SectionCfgToken.EndList),
-					new(SectionCfgToken.EndSection),
+					new(SectionCfgToken.StartSection, s1, string.Empty),
+					new(SectionCfgToken.StartList, l1, string.Empty),
+					new(SectionCfgToken.ListValue, l1, "One"),
+					new(SectionCfgToken.Comment, default, "Comment"),
+					new(SectionCfgToken.ListValue, l1, "Two"),
+					new(SectionCfgToken.ListValue, l1, "Three\nThree"),
+					new(SectionCfgToken.Comment, default, "CommentAgain"),
+					new(SectionCfgToken.ListValue, l1, "Heyyyy"),
+					new(SectionCfgToken.EndList, l1, string.Empty),
+					new(SectionCfgToken.EndSection, s1, string.Empty),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -762,15 +728,15 @@ List:{
 			string s = "List:{\"One\"'Two'\"Three\"'Four'}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("List")),
-					new(SectionCfgToken.StartList),
-					new(SectionCfgToken.ListValue, "One"),
-					new(SectionCfgToken.ListValue, "Two"),
-					new(SectionCfgToken.ListValue, "Three"),
-					new(SectionCfgToken.ListValue, "Four"),
-					new(SectionCfgToken.EndList),
+					new(SectionCfgToken.StartList, l1),
+					new(SectionCfgToken.ListValue, l1, "One"),
+					new(SectionCfgToken.ListValue, l1, "Two"),
+					new(SectionCfgToken.ListValue, l1, "Three"),
+					new(SectionCfgToken.ListValue, l1, "Four"),
+					new(SectionCfgToken.EndList, l1, string.Empty),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -791,16 +757,16 @@ List:{
 			string s = "List:{\"One\" \"One\" \"'Two'\" 'Three' '\"Four\"'}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("List")),
-					new(SectionCfgToken.StartList),
-					new(SectionCfgToken.ListValue, "One"),
-					new(SectionCfgToken.ListValue, "One"),
-					new(SectionCfgToken.ListValue, "'Two'"),
-					new(SectionCfgToken.ListValue, "Three"),
-					new(SectionCfgToken.ListValue, "\"Four\""),
-					new(SectionCfgToken.EndList),
+					new(SectionCfgToken.StartList, l1),
+					new(SectionCfgToken.ListValue, l1, "One"),
+					new(SectionCfgToken.ListValue, l1, "One"),
+					new(SectionCfgToken.ListValue, l1, "'Two'"),
+					new(SectionCfgToken.ListValue, l1, "Three"),
+					new(SectionCfgToken.ListValue, l1, "\"Four\""),
+					new(SectionCfgToken.EndList, l1),
 					new(SectionCfgToken.End),
 				});
 			}
@@ -828,18 +794,18 @@ List:{
 				"    Four\"}}";
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
+				CfgKey s1 = CfgKey.Create("Section");
+				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
-					new(CfgKey.Create("Section")),
-					new(SectionCfgToken.StartSection),
-					new(CfgKey.Create("List")),
-					new(SectionCfgToken.StartList),
-					new(SectionCfgToken.ListValue, "One"),
-					new(SectionCfgToken.ListValue, "Two"),
-					new(SectionCfgToken.ListValue, "Three\n\t\tThree"),
-					new(SectionCfgToken.ListValue, "Four\n    Four"),
-					new(SectionCfgToken.EndList),
-					new(SectionCfgToken.EndSection),
+					new(SectionCfgToken.StartSection, s1),
+					new(SectionCfgToken.StartList, l1),
+					new(SectionCfgToken.ListValue, l1, "One"),
+					new(SectionCfgToken.ListValue, l1, "Two"),
+					new(SectionCfgToken.ListValue, l1, "Three\n\t\tThree"),
+					new(SectionCfgToken.ListValue, l1, "Four\n    Four"),
+					new(SectionCfgToken.EndList, l1),
+					new(SectionCfgToken.EndSection, s1),
 					new(SectionCfgToken.End),
 				});
 			}

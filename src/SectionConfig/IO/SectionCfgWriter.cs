@@ -53,7 +53,7 @@
 			Quoting = quoting;
 			Multiline = multiline;
 			CloseOutput = closeOutput;
-			State = StreamState.Start;
+			State = WriteStreamState.Start;
 			tokenIds = new();
 			nextId = 0;
 			IndentationLevel = 0;
@@ -94,7 +94,7 @@
 		/// <summary>
 		/// The current state.
 		/// </summary>
-		public StreamState State { get; private set; }
+		public WriteStreamState State { get; private set; }
 		/// <summary>
 		/// Writes a comment. If any linebreaks are present, the comment will be written on multiple lines.
 		/// </summary>
@@ -104,10 +104,10 @@
 		{
 			switch (State)
 			{
-				case StreamState.SectionOpen:
-				case StreamState.SectionClose:
-				case StreamState.Start:
-				case StreamState.List:
+				case WriteStreamState.SectionOpen:
+				case WriteStreamState.SectionClose:
+				case WriteStreamState.Start:
+				case WriteStreamState.List:
 					Util.SpanSplit(comment, '\n', (str, offset, length) =>
 					{
 						Writer.Write('#');
@@ -138,9 +138,9 @@
 						}
 					});
 					break;
-				case StreamState.AfterKey:
-				case StreamState.Error:
-				case StreamState.End:
+				case WriteStreamState.AfterKey:
+				case WriteStreamState.Error:
+				case WriteStreamState.End:
 					throw new InvalidOperationException(string.Concat("Can't write comment \"",
 #if NETSTANDARD2_0
 						comment.ToString(),
@@ -186,13 +186,17 @@
 		/// <param name="key">The key to write.</param>
 		public void WriteKey(CfgKey key)
 		{
-			if (State != StreamState.Start)
+			if (State != WriteStreamState.Start)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write key \"", key.KeyString, "\", because the current state is ", State.ToString(), " "));
 			}
+			if (key.KeyString == null)
+			{
+				throw new ArgumentException("Don't pass in default(CfgKey), you need to use CfgKey.Create() or CfgKey.TryCreate() to get a valid key.", nameof(key));
+			}
 			WriteIndentation(IndentationLevel);
 			Writer.Write(key.KeyString);
-			State = StreamState.AfterKey;
+			State = WriteStreamState.AfterKey;
 		}
 		/// <summary>
 		/// Writes a value. Throws <see cref="InvalidOperationException"/> if not in the correct state.
@@ -201,7 +205,7 @@
 		/// <param name="val">The value to write.</param>
 		public void WriteValue(ReadOnlySpan<char> val)
 		{
-			if (State != StreamState.AfterKey)
+			if (State != WriteStreamState.AfterKey)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write value \"",
 #if NETSTANDARD2_0
@@ -263,7 +267,7 @@
 						break;
 				}
 			}
-			State = StreamState.Start;
+			State = WriteStreamState.Start;
 			Writer.Write(NewLine.Span);
 		}
 		/// <summary>
@@ -272,14 +276,14 @@
 		/// <returns>A token used to write values and close the value list.</returns>
 		public WriteValueListToken WriteOpenValueList()
 		{
-			if (State != StreamState.AfterKey)
+			if (State != WriteStreamState.AfterKey)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write open value list because the current state is ", State.ToString(), " "));
 			}
 			Writer.Write(": {");
 			Writer.Write(NewLine.Span);
 			++IndentationLevel;
-			State = StreamState.List;
+			State = WriteStreamState.List;
 			int id = nextId++;
 			tokenIds.Push(id);
 			return new(this, id);
@@ -290,21 +294,21 @@
 		/// <returns>A token used to close the section.</returns>
 		public WriteSectionToken WriteOpenSection()
 		{
-			if (State != StreamState.AfterKey)
+			if (State != WriteStreamState.AfterKey)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write open section because the current state is ", State.ToString()));
 			}
 			Writer.Write(" {");
 			Writer.Write(NewLine.Span);
 			++IndentationLevel;
-			State = StreamState.Start;
+			State = WriteStreamState.Start;
 			int id = nextId++;
 			tokenIds.Push(id);
 			return new(this, id);
 		}
 		internal void WriteListValue(ReadOnlySpan<char> val)
 		{
-			if (State != StreamState.List)
+			if (State != WriteStreamState.List)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write list value \"",
 #if NETSTANDARD2_0
@@ -337,7 +341,7 @@
 		}
 		internal void WriteCloseValueList(int id)
 		{
-			if (State != StreamState.List)
+			if (State != WriteStreamState.List)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write close value list because the current state is ", State.ToString(), " "));
 			}
@@ -348,11 +352,11 @@
 			WriteIndentation(--IndentationLevel);
 			Writer.Write(CfgSyntax.EndSectionOrList);
 			Writer.Write(NewLine.Span);
-			State = StreamState.Start;
+			State = WriteStreamState.Start;
 		}
 		internal void WriteCloseSection(int id)
 		{
-			if (State != StreamState.Start)
+			if (State != WriteStreamState.Start)
 			{
 				throw new InvalidOperationException(string.Concat("Can't write close section because the current state is ", State.ToString(), " "));
 			}
@@ -364,7 +368,7 @@
 			Writer.Write(CfgSyntax.EndSectionOrList);
 			Writer.Write(NewLine.Span);
 			--SectionLevel;
-			State = StreamState.Start;
+			State = WriteStreamState.Start;
 		}
 		private void WriteRawQuoted(ReadOnlySpan<char> val, Quoting quoting)
 		{
@@ -441,7 +445,7 @@
 		/// </summary>
 		public void Dispose()
 		{
-			State = StreamState.End;
+			State = WriteStreamState.End;
 			if (CloseOutput)
 			{
 				Writer.Dispose();

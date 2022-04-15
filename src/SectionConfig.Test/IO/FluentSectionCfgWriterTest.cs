@@ -23,7 +23,7 @@
 					.ValueList(CfgKey.Create("Key5"), "OneString")
 					.ValueList(CfgKey.Create("Key6"), "One", "Two");
 			builder.Dispose();
-			Assert.Equal(StreamState.End, builder.Writer.State);
+			Assert.Equal(WriteStreamState.End, builder.Writer.State);
 			string cfg = str.ToString();
 			Assert.Equal("Key1: value\nKey2: value\n#This is the section\nSection {\n\tKey3: value\n\tKey4: value\n}\nKey5: {\n\tOneString\n}\nKey6: {\n\tOne\n\tTwo\n}\n", str.ToString());
 		}

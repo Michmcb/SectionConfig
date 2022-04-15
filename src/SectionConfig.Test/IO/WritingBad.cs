@@ -31,6 +31,12 @@
 			Assert.Throws<InvalidCfgKeyException>(() => CfgKey.Create(":"));
 		}
 		[Fact]
+		public static void CantWriteDefaultKey()
+		{
+			SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);
+			Assert.Throws<ArgumentException>(() => scw.WriteKey(default));
+		}
+		[Fact]
 		public static void CantWriteAfterDisposal()
 		{
 			SectionCfgWriter scw = new(StreamWriter.Null, newLine: NewLine.Lf);

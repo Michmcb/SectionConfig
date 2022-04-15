@@ -57,7 +57,7 @@
 		/// <returns>True if both <see cref="KeyString"/> are equal, false otherwise.</returns>
 		public bool Equals(CfgKey other)
 		{
-			return KeyString.Equals(other.KeyString);
+			return string.Equals(KeyString, other.KeyString);
 		}
 		/// <summary>
 		/// Returns the hashcode of <see cref="KeyString"/>.
@@ -65,7 +65,7 @@
 		/// <returns>Hashcode of <see cref="KeyString"/>.</returns>
 		public override int GetHashCode()
 		{
-			return KeyString.GetHashCode();
+			return KeyString?.GetHashCode() ?? 0;
 		}
 		/// <summary>
 		/// Returns <see cref="KeyString"/>.

@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>0.6</Version>
+    <Version>0.7</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -16,11 +16,12 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Fixed a bug where reading a duplicate key for a section would cause an InvalidCastException instead of an error message
-- Fixed a bug where encountering the end of a stream while reading a value list would cause the State to not be set to Error correctly
-- The error message for keys read from a stream with invalid characters will now rpeort the full key name, instead of only the valid portion plus 1 invalid character
-- FluentSectionCfgWriter added, to allow for easily writing a file
-- More unit tests, 99.1% coverage now</PackageReleaseNotes>
+    <PackageReleaseNotes>- Fixed a bug causing a null reference exception when comparing a default CfgKey to another CfgKey, or getting its hash code
+- Split StreamState into WriteStreamState and ReadStreamState
+- ReadResult has been simplified, and is easier to use
+- SectionCfgReader always returns a key along with a value/openlist/opensection now, so it's a bit simpler
+- Keys are also returned for section open/close, list open/close, and while reading list values for convenience
+- SectionCfgWriter disallows writing default(CfgKey) because that isn't a valid key</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

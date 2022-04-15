@@ -12,9 +12,8 @@
 			using SectionCfgReader scr = new(new StringReader("Key{"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(SectionCfgToken.Error, "Found end of stream when there were still 1 sections to close"),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.Error, default, "Found end of stream when there were still 1 sections to close"),
 			});
 		}
 		[Fact]
@@ -23,11 +22,9 @@
 			using SectionCfgReader scr = new(new StringReader("Key{Key:Value"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.Value, "Value"),
-				new(SectionCfgToken.Error, "Found end of stream when there were still 1 sections to close"),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
+				new(SectionCfgToken.Error, default, "Found end of stream when there were still 1 sections to close"),
 			});
 		}
 		[Fact]
@@ -36,13 +33,10 @@
 			using SectionCfgReader scr = new(new StringReader("Key{Key{Key{"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(SectionCfgToken.Error, "Found end of stream when there were still 3 sections to close"),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.Error, default, "Found end of stream when there were still 3 sections to close"),
 			});
 		}
 		[Fact]
@@ -51,8 +45,8 @@
 			using SectionCfgReader scr = new(new StringReader("}"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "Found section close when there was no section to close"),
-				new(SectionCfgToken.Error, "Encountered error, cannot read further"),
+				new(SectionCfgToken.Error,default, "Found section close when there was no section to close"),
+				new(SectionCfgToken.Error, default, "Encountered error, cannot read further"),
 			});
 		}
 		[Fact]
@@ -61,10 +55,9 @@
 			using SectionCfgReader scr = new(new StringReader("Key{}}"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartSection),
-				new(SectionCfgToken.EndSection),
-				new(SectionCfgToken.Error, "Found section close when there was no section to close"),
+				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.EndSection, CfgKey.Create("Key"), string.Empty),
+				new(SectionCfgToken.Error, default, "Found section close when there was no section to close"),
 			});
 		}
 		[Fact]
@@ -73,30 +66,29 @@
 			using SectionCfgReader scr = new(new StringReader("Key:'Value"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.Error, "Found end of stream when reading quoted string Value"),
+				new(SectionCfgToken.Error, CfgKey.Create("Key"), "Found end of stream when reading quoted string Value"),
 			});
 		}
 		[Fact]
 		public static void UnclosedQuotedValueInsideList()
 		{
 			using SectionCfgReader scr = new(new StringReader("Key:{'Value"));
+			CfgKey l1 = CfgKey.Create("Key");
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartList),
-				new(SectionCfgToken.Error, "Found end of stream when reading quoted string Value"),
+				new(SectionCfgToken.StartList, l1, string.Empty),
+				new(SectionCfgToken.Error, l1, "Found end of stream when reading quoted string Value"),
 			});
 		}
 		[Fact]
 		public static void UnclosedList()
 		{
 			using SectionCfgReader scr = new(new StringReader("Key:{"));
+			CfgKey l1 = CfgKey.Create("Key");
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.StartList),
-				new(SectionCfgToken.Error, "Encountered end of stream when trying to read List Values"),
+				new(SectionCfgToken.StartList, l1, string.Empty),
+				new(SectionCfgToken.Error, l1, "Encountered end of stream when trying to read List Values"),
 			});
 		}
 		[Fact]
@@ -105,7 +97,7 @@
 			using SectionCfgReader scr = new(new StringReader("String"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "Found end of stream when reading Key String"),
+				new(SectionCfgToken.Error, default, "Found end of stream when reading Key String"),
 			});
 		}
 		[Fact]
@@ -114,9 +106,8 @@
 			using SectionCfgReader scr = new(new StringReader("Key:#Value\nInvalid"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(CfgKey.Create("Key")),
-				new(SectionCfgToken.Value, "#Value"),
-				new(SectionCfgToken.Error, "Found end of stream when reading Key Invalid"),
+				new(SectionCfgToken.Value, CfgKey.Create("Key"), "#Value"),
+				new(SectionCfgToken.Error, default, "Found end of stream when reading Key Invalid"),
 			});
 		}
 		[Fact]
@@ -125,22 +116,22 @@
 			using SectionCfgReader scr = new(new StringReader("Ke\ny:Value"));
 			Helper.AssertReadMatches(scr, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ny"),
+				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ny"),
 			});
 			using SectionCfgReader scr2 = new(new StringReader("Ke\ry:Value"));
 			Helper.AssertReadMatches(scr2, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ry"),
+				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ry"),
 			});
 			using SectionCfgReader scr3 = new(new StringReader("Ke}y:Value"));
 			Helper.AssertReadMatches(scr3, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke}y"),
+				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke}y"),
 			});
 			using SectionCfgReader scr4 = new(new StringReader("Ke#y:Value"));
 			Helper.AssertReadMatches(scr4, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke#y"),
+				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke#y"),
 			});
 		}
 	}

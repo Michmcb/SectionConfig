@@ -11,11 +11,11 @@
 		[Fact]
 		public static void PathCtor()
 		{
-			using SectionCfgWriter scw = new("File.scfg", append: true, Encoding.UTF8);
+			using SectionCfgWriter scw = new("PathCtor.scfg", append: true, Encoding.UTF8);
 			StreamWriter writer = Assert.IsType<StreamWriter>(scw.Writer);
 			FileStream fs = Assert.IsType<FileStream>(writer.BaseStream);
 			Assert.Equal(Encoding.UTF8, writer.Encoding);
-			Assert.Equal("File.scfg", Path.GetFileName(fs.Name));
+			Assert.Equal("PathCtor.scfg", Path.GetFileName(fs.Name));
 		}
 		[Fact]
 		public static void KeyValues()
@@ -32,7 +32,7 @@
 				scw.WriteKeyValue(CfgKey.Create("Key5"), "Value5\nValue 5 still");
 			}
 			Assert.Equal("Key1: Value1\nKey2: \"\"\"Value2\"\"\"\nKey3: \"'Value3'\"\nKey4: \"  Value4  \"\nKey5:\n\tValue5\n\tValue 5 still\n", sw.ToString());
-			Assert.Equal(StreamState.End, scw.State);
+			Assert.Equal(WriteStreamState.End, scw.State);
 		}
 		[Fact]
 		public static void SectionKeyValueWithSpaces()

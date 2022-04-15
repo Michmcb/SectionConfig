@@ -6,19 +6,15 @@
 	public enum SectionCfgToken
 	{
 		/// <summary>
-		/// A key that comes before any of: <see cref="StartSection"/>, <see cref="StartList"/>, <see cref="Value"/>.
-		/// </summary>
-		Key,
-		/// <summary>
-		/// A single value that comes after <see cref="Key"/>.
+		/// A key and a single value.
 		/// </summary>
 		Value,
 		/// <summary>
-		/// A comment. Can appear anywhere between elements, but not inside <see cref="Value"/>.
+		/// A comment. Can appear anywhere between elements.
 		/// </summary>
 		Comment,
 		/// <summary>
-		/// The start of an list; expect <see cref="ListValue"/> or <see cref="EndList"/> to follow.
+		/// A key and the start of an list; expect <see cref="ListValue"/> or <see cref="EndList"/> to follow.
 		/// </summary>
 		StartList,
 		/// <summary>
@@ -30,7 +26,7 @@
 		/// </summary>
 		EndList,
 		/// <summary>
-		/// The start of a section.
+		/// A key and the  start of a section.
 		/// </summary>
 		StartSection,
 		/// <summary>

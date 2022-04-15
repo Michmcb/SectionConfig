@@ -1,9 +1,9 @@
 ﻿namespace SectionConfig.IO
 {
 	/// <summary>
-	/// The state of a <see cref="SectionCfgReader"/> or <see cref="SectionCfgWriter"/>.
+	/// The state of a <see cref="SectionCfgReader"/>
 	/// </summary>
-	public enum StreamState
+	public enum WriteStreamState
 	{
 		/// <summary>
 		/// Ready to read or write a Key or close section

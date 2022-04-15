@@ -13,20 +13,15 @@
 			{
 				ReadResult ar = scr.Read();
 				Assert.Equal(er.Token, ar.Token);
-				if (ar.Token == SectionCfgToken.Key)
-				{
-					Assert.Equal(er.GetKey(), ar.GetKey());
-				}
-				else
-				{
-					Assert.Equal(er.GetContent(), ar.GetContent());
-				}
+				Assert.Equal(er.Key, ar.Key);
+				Assert.Equal(er.Content, ar.Content);
 			}
-			if (scr.State == StreamState.Error)
+			if (scr.State == ReadStreamState.Error)
 			{
 				ReadResult ar = scr.Read();
 				Assert.Equal(SectionCfgToken.Error, ar.Token);
-				Assert.Equal("Encountered error, cannot read further", ar.GetContent());
+				Assert.Equal(default, ar.Key);
+				Assert.Equal("Encountered error, cannot read further", ar.Content);
 			}
 			else
 			{

@@ -14,13 +14,11 @@
 		private readonly CfgRoot root;
 		private ICfgObjectParent section;
 		private CfgValueList valueList;
-		private CfgKey key;
 		private readonly Stack<ICfgObjectParent> parentSections;
 		public ReadResultHandler(CfgRoot root)
 		{
 			this.root = root;
 			section = root;
-			key = default;
 			valueList = null!;
 			parentSections = new();
 		}
@@ -32,40 +30,37 @@
 		{
 			switch (rr.Token)
 			{
-				case SectionCfgToken.Key:
-					key = rr.GetKey();
-					break;
 				case SectionCfgToken.Value:
-					CfgValue value = new(key, rr.GetContent());
+					CfgValue value = new(rr.Key, rr.Content);
 					if (section.TryAdd(value) != AddError.Ok)
 					{
 						parentSections.Push(section);
-						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
 						return true;
 					}
 					break;
 				case SectionCfgToken.Comment:
 					break;
 				case SectionCfgToken.StartList:
-					valueList = new(key, new List<string>());
+					valueList = new(rr.Key, new List<string>());
 					if (section.TryAdd(valueList) != AddError.Ok)
 					{
 						parentSections.Push(section);
-						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
 						return true;
 					}
 					break;
 				case SectionCfgToken.ListValue:
-					valueList.Values.Add(rr.GetContent());
+					valueList.Values.Add(rr.Content);
 					break;
 				case SectionCfgToken.EndList:
 					break;
 				case SectionCfgToken.StartSection:
 					parentSections.Push(section);
-					CfgSection newSection = new(key, root.KeyComparer);
+					CfgSection newSection = new(rr.Key, root.KeyComparer);
 					if (section.TryAdd(newSection) != AddError.Ok)
 					{
-						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, key.KeyString)));
+						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
 						return true;
 					}
 					section = newSection;
@@ -78,7 +73,7 @@
 					return true;
 				default:
 				case SectionCfgToken.Error:
-					Result = new(new ErrMsg<LoadError>(LoadError.MalformedStream, rr.GetContent()));
+					Result = new(new ErrMsg<LoadError>(LoadError.MalformedStream, rr.Content));
 					return true;
 			}
 			return false;

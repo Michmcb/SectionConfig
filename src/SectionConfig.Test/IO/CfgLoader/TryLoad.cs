@@ -36,7 +36,7 @@
 		[Fact]
 		public static void WorksFineFile()
 		{
-			File.WriteAllText("file.scfg", "Section{Key:Value\n}", Encoding.UTF8);
+			File.WriteAllText("WorksFineFile.scfg", "Section{Key:Value\n}", Encoding.UTF8);
 			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad("file.scfg", Encoding.UTF8, StringComparer.Ordinal);
 			Assert.NotNull(result.Value);
 

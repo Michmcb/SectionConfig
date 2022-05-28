@@ -23,8 +23,8 @@ Key 4:
 	Done
 
 	Key 5:
-	Misaligned, but still
-	a multiline value.
+		Aligned, still
+		a multiline value.
 Section{
 	Key:
 		'Also a multiline string
@@ -43,7 +43,6 @@ List:{
 }
 ";
 			// TODO have to decide how we're going to have the ability to have a multiline string within a string list
-			// TODO It would be nice if we write a Key without any value on that line, we interpret that line as being an empty value, instead of interpreting the following lines as a multi-line string. This would mean enforcing that multi-line strings MUST be indented more than the Key was, which is not terribly difficult to do. We just need to change the check to say the indentation has to start with the Key's indentation, AND the indentation has to be longer than the Key's indentation.
 
 			// This is how YAML does it. Basically each string is an item in a sequence, and the multiline string specifies > (multiline string). it's >- cause the library meant "block chomping".
 			/*
@@ -74,7 +73,7 @@ List:{
 					new(SectionCfgToken.Comment, default, " Some comment   "),
 					new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Blah"),
 					new(SectionCfgToken.Value, CfgKey.Create("Key 4"), "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Misaligned, but still\na multiline value."),
+					new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Aligned, still\na multiline value."),
 					new(SectionCfgToken.StartSection, s1),
 					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Also a multiline string\n\t\tIt just keeps going too"),
 					new(SectionCfgToken.EndSection, s1),
@@ -146,6 +145,152 @@ List:{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
 					new KeyValuePair<string, string>("Key", "")
+				);
+			}
+		}
+		[Fact]
+		public static void EmptyValueAndMultilineValue()
+		{
+			string s = "Key1:\nKey2:\n\tvalue\n\n\tKey3:\n\tKey4:\n\t\tvalue\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "value"),
+					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key4"), "value"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", ""),
+					new KeyValuePair<string, string>("Key2", "value"),
+					new KeyValuePair<string, string>("Key3", ""),
+					new KeyValuePair<string, string>("Key4", "value")
+				);
+			}
+		}
+		[Fact]
+		public static void ManyEmptyKeys()
+		{
+			string s = "\tKey1:\n\tKey2:\n\tKey3:\nKey4:\nKey5:\nKey6:\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key4"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key5"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key6"), ""),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", ""),
+					new KeyValuePair<string, string>("Key2", ""),
+					new KeyValuePair<string, string>("Key3", ""),
+					new KeyValuePair<string, string>("Key4", ""),
+					new KeyValuePair<string, string>("Key5", ""),
+					new KeyValuePair<string, string>("Key6", "")
+				);
+			}
+		}
+		[Fact]
+		public static void MultilineNotTreatedAsKey()
+		{
+			string s = "Key1:\n\tNotAKey:\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "NotAKey:"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", "NotAKey:")
+				);
+			}
+		}
+		[Fact]
+		public static void EmptyValueDecreasingIndentation()
+		{
+			string s = "\t\t\tKey1:\n\t\tKey2:\n\tKey3:\nKey4:\nKey5:\n";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key4"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key5"), ""),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", ""),
+					new KeyValuePair<string, string>("Key2", ""),
+					new KeyValuePair<string, string>("Key3", ""),
+					new KeyValuePair<string, string>("Key4", ""),
+					new KeyValuePair<string, string>("Key5", "")
+				);
+			}
+		}
+		[Fact]
+		public static void IncreasingIndentationMultiline()
+		{
+			string s = "Key:\n\tThis value:\n\tis not a key!";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value:\nis not a key!"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key", "This value:\nis not a key!")
+				);
+			}
+		}
+		[Fact]
+		public static void EmptyValueIncreasingIndentationThenMultiline()
+		{
+			string s = "Key1:\nKey2:\n\tThis value:\n\tis not a key!";
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, new ReadResult[]
+				{
+					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
+					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "This value:\nis not a key!"),
+					new(SectionCfgToken.End),
+				});
+			}
+			using (SectionCfgReader scr = new(new StringReader(s)))
+			{
+				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+				Helper.AssertKeyValues(root,
+					new KeyValuePair<string, string>("Key1", ""),
+					new KeyValuePair<string, string>("Key2", "This value:\nis not a key!")
 				);
 			}
 		}
@@ -787,7 +932,7 @@ List:{
 		{
 			string s = "Section{\tList:{\n" +
 				"\t\tOne\n" +
-				"\t\tTwo\n" +
+				"\tTwo\n" +
 				"\t\t'Three\n" +
 				"\t\tThree'\n" +
 				"    \"Four\n" +

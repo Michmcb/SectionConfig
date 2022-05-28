@@ -1,7 +1,7 @@
 ﻿namespace SectionConfig
 {
 	using System.Collections.Generic;
-
+	
 	/// <summary>
 	/// The root object, which can contain other <see cref="ICfgObject"/>.
 	/// </summary>

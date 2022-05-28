@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>0.7</Version>
+    <Version>1.0</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -16,12 +16,8 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Fixed a bug causing a null reference exception when comparing a default CfgKey to another CfgKey, or getting its hash code
-- Split StreamState into WriteStreamState and ReadStreamState
-- ReadResult has been simplified, and is easier to use
-- SectionCfgReader always returns a key along with a value/openlist/opensection now, so it's a bit simpler
-- Keys are also returned for section open/close, list open/close, and while reading list values for convenience
-- SectionCfgWriter disallows writing default(CfgKey) because that isn't a valid key</PackageReleaseNotes>
+    <PackageReleaseNotes>- Made it simpler to have an empty string as a key's value; quotes are no longer needed. Instead, the next line has to just not be more indented.
+- Now, multiline strings have to be indented by more than what their key was.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

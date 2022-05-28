@@ -18,7 +18,8 @@ The path of something is composed of every key of each parent section, followed 
 ### Values
 A Key followed by a colon (:) and then some text is a Key/Value.
 If the value is on the same line, it's a single-line value. Leading or trailing whitespace is ignored.
-If the value starts indented on the next line, it's a multi-line value. The multiline value ends when the indentation is no longer present. To be precise: The 1st line defines the indentation to look for. Once that indentation is not found, the multi-line value ends. The resultant string will not end with a Linefeed or Carriage return.
+If there is no text after the colon, then it's interpreted as either an empty string, or a multiline value.
+If there text starts indented on the next line, it's a multiline value. The multiline value ends when the indentation is no longer present. To be precise: The 1st line defines the indentation to look for. Once that indentation is not found, the multi-line value ends. The resultant string will not end with a Linefeed or Carriage return.
 If the value is quoted ('single' or "double"), then it is literal; everything inside the quotes is taken exactly as is, including any whitespace. The only exception is the quote character used to quote the string; doubling it will produce a single quote character.
 
 
@@ -34,6 +35,10 @@ Each string on a new line is a Value within that List. Values within the List ca
 
 ### Comments
 A Comment is a number sign (#), followed by text. They must be the first thing on the line (besides whitespace).
+
+### Indentation
+It's recommended to indent by 1 more level when you open a section or a value list. Tabs or spaces, whatever you prefer, just be consistent.
+The only time when indentation is significant is a multiline value. A multiline value is denoted by a Key on one line, and the next line being more indented than the Key was. "More indented" meaning the next line starts with the same indentation that the Key did, and has more indentation beyond that.
 
 
 ## Examples
@@ -57,14 +62,23 @@ Key: Nor "does" this
 # You need quotes to include leading/trailing whitespace
 Key: " Value with whitespace "
 
+# You don't need to use quotes to denote an empty value. All 3 of these are equivalent.
+Key1:
+Key2: ""
+Key3: ''
+
 # A single value spanning multiple lines. The indentation on the 1st and 3rd lines are not part of the string, but the extra indentation (3 extra spaces) on the 2nd line is part of the string.
 Key:
    This value
       spans many lines
    and doesn't include the indentation
 
+# The indentation determines if text is a multiline value or an empty value. Because NotEmpty is not more indented than Empty, it is not considered a multiline value. However because NotEmpty has text on the next line that is more indented than itself, "NotAKey:" is the text value of NotEmpty.
+Empty:
+NotEmpty:
+   NotAKey:
 
-# Quoted values, even if they start on the next line, are still 100% literal
+# Quoted values, even if they start on the next line, are still 100% literal. So this value will include the 3 spaces of indentation on the 3rd and 4th lines.
 Key:
    "This value
    Spans many lines
@@ -77,7 +91,7 @@ Key: {
 	three
 }
 
-# You can have quoted values in a value list as well
+# You can have quoted values in a value list as well, but note that they are completely literal.
 Key: {
 	"this is just
 	one value"

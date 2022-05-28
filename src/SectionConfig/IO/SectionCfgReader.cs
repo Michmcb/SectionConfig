@@ -11,6 +11,7 @@
 	public sealed class SectionCfgReader : IDisposable
 	{
 		private char lastChar;
+		private string currentLineIdentation;
 		private CfgKey listKey;
 		private readonly Stack<CfgKey> sectionKeys;
 		/// <summary>
@@ -23,6 +24,7 @@
 			Reader = reader;
 			CloseInput = closeInput;
 			sectionKeys = new();
+			currentLineIdentation = string.Empty;
 		}
 		/// <summary>
 		/// The underlying <see cref="TextReader"/> being used.
@@ -47,13 +49,12 @@
 		public ReadResult Read()
 		{
 			string? content;
-			StringBuilder whitespace;
 			char? c;
 			switch (State)
 			{
 				case ReadStreamState.Section:
 					// Expecting a key or start/end section or comment or end of stream
-					c = NextNonWhitespaceChar();
+					c = GetLastChar() ?? GetNextSignificantChar().Next;
 					// End of the stream
 					if (!c.HasValue)
 					{
@@ -75,6 +76,7 @@
 							// Any other char is the start of a key
 							StringBuilder sb = new();
 							sb.Append(c.Value);
+							// Read the rest of the key, so the stream is up to the colon or the brace.
 							(CfgKey? key, bool foundBrace) = TryReadKey(sb, out content);
 
 							// First if we found no key, that's an error
@@ -90,9 +92,11 @@
 								sectionKeys.Push(key.Value);
 								return new ReadResult(SectionCfgToken.StartSection, key.Value, string.Empty);
 							}
-
+							Span<char> indentationBeforeKey = stackalloc char[currentLineIdentation.Length];
+							currentLineIdentation.AsSpan().CopyTo(indentationBeforeKey);
 							// So now we know it was Key:. So, get the next char. If it is an open brace, then it's opening a list. Otherwise, it's just a Key: Value
-							NextSignificantChar nsc = NextNonWhitespaceChar(whitespace = new());
+
+							NextSignificantChar nsc = GetNextSignificantChar();
 							c = nsc.Next;
 							// End of stream, it's just a Key with an empty value
 							if (!c.HasValue)
@@ -114,6 +118,16 @@
 										? new(SectionCfgToken.Value, key.Value, content)
 										: Error(key.Value, content);
 								default:
+									// If there was a newline, and indentation has not changed, then it's like this...
+									// Key1:
+									// Key2:
+									// And since it's very convenient to be able to have an empty value be denoted by just a blank line
+									// So, if the indentation before the key we just read starts with this new line's indentation, we will treat it as 
+									if (nsc.SawNewline && StartsWith(value: indentationBeforeKey, startsWith: currentLineIdentation.AsSpan()))
+									{
+										lastChar = c.Value;
+										return new ReadResult(SectionCfgToken.Value, key.Value, string.Empty);
+									}
 									// Unquoted string. Our char was the start of the value so stick that onto our StringBuilder and read the rest of it.
 									// If we saw a newline before we got to read the first char of the value, then that means it was like...
 									// Key:
@@ -121,13 +135,13 @@
 									// Which means that it's unquoted and multiline.
 									sb.Clear();
 									sb.Append(c.Value);
-									return whitespace.Length > 0 && nsc.SawNewline
-										? new ReadResult(SectionCfgToken.Value, key.Value, ReadUnquotedMultilineString(sb, whitespace.ToString().AsSpan()))
+									return currentLineIdentation.Length > 0 && nsc.SawNewline
+										? new ReadResult(SectionCfgToken.Value, key.Value, ReadUnquotedMultilineString(sb, currentLineIdentation.AsSpan()))
 										: new ReadResult(SectionCfgToken.Value, key.Value, ReadTrimmedLine(c.Value));
 							}
 					}
 				case ReadStreamState.List:
-					c = NextNonWhitespaceChar();
+					c = GetLastChar() ?? GetNextSignificantChar().Next;
 					if (!c.HasValue)
 					{
 						return Error(listKey, "Encountered end of stream when trying to read List Values");
@@ -157,6 +171,18 @@
 				case ReadStreamState.Error:
 					return new(SectionCfgToken.Error, default, "Encountered error, cannot read further");
 			}
+		}
+		private static bool StartsWith(ReadOnlySpan<char> value, ReadOnlySpan<char> startsWith)
+		{
+			if (startsWith.Length <= value.Length)
+			{
+				for (int i = 0; i < startsWith.Length; i++)
+				{
+					if (startsWith[i] != value[i]) return false;
+				}
+				return true;
+			}
+			return false;
 		}
 		private ReadResult EndOfStream()
 		{
@@ -377,10 +403,10 @@
 			return sb.ToString();
 		}
 		/// <summary>
-		/// Skips all whitespace and returns the first non-whitespace character found, and resets <see cref="lastChar"/> to default, if it was not already.
+		/// If <see cref="lastChar"/> has a value, returns that value and clears it.
+		/// Otherwise, returns null.
 		/// </summary>
-		/// <returns>The first non-whitespace character, or null if end of stream was found.</returns>
-		private char? NextNonWhitespaceChar()
+		private char? GetLastChar()
 		{
 			if (lastChar != '\0')
 			{
@@ -388,29 +414,14 @@
 				lastChar = '\0';
 				if (!char.IsWhiteSpace(c)) return c;
 			}
-			while (true)
-			{
-				int r = Reader.Read();
-				if (r != -1)
-				{
-					char c = (char)r;
-					if (!char.IsWhiteSpace(c))
-					{
-						return c;
-					}
-				}
-				else
-				{
-					return null;
-				}
-			}
+			return null;
 		}
 		/// <summary>
 		/// Skips all whitespace and returns the first non-whitespace character found.
-		/// It also appends all whitespace (only AFTER a newline) to <paramref name="whitespace"/>.
 		/// </summary>
-		private NextSignificantChar NextNonWhitespaceChar(StringBuilder whitespace)
+		private NextSignificantChar GetNextSignificantChar()
 		{
+			StringBuilder sb = new();
 			bool b = false;
 			while (true)
 			{
@@ -420,25 +431,27 @@
 					char c = (char)r;
 					if (!char.IsWhiteSpace(c))
 					{
+						currentLineIdentation = sb.ToString();
 						return new(c, b);
 					}
 					if (c != '\n' && c != '\r')
 					{
-						whitespace.Append(c);
+						sb.Append(c);
 					}
 					else
 					{
 						b = true;
-						whitespace.Clear();
+						sb.Clear();
 					}
 				}
 				else
 				{
+					currentLineIdentation = sb.ToString();
 					return new(null, b);
 				}
 			}
 		}
-		#region IDisposable Support
+#region IDisposable Support
 		private bool disposedValue = false; // To detect redundant calls
 		/// <summary>
 		/// If <see cref="CloseInput"/> is true, disposes of <see cref="Reader"/>. Otherwise, does not.
@@ -455,6 +468,6 @@
 				disposedValue = true;
 			}
 		}
-		#endregion
+#endregion
 	}
 }

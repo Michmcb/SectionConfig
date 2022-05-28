@@ -22,7 +22,7 @@ namespace System.Collections.Generic
 			}
 			else
 			{
-				obj = default;
+				obj = default!;
 				return false;
 			}
 		}

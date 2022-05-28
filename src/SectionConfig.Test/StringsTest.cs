@@ -5,6 +5,8 @@
 	using Xunit;
 	using static SectionConfig.Strings;
 
+	// We suppress this warning because we do want to actually make sure the Count property returns the correct number, as well as there being just 1 item in the collection
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
 	public static class StringsTest
 	{
 		[Fact]
@@ -32,7 +34,7 @@
 
 			SingleEnumerator iter = Assert.IsType<SingleEnumerator>(strs.GetEnumerator());
 			Assert.IsType<SingleEnumerator>(((IEnumerable)strs).GetEnumerator());
-			for (int i = 0; i < 1; i++)
+			for (int i = 0; i < 2; i++)
 			{
 				Assert.Null(iter.Current);
 				Assert.True(iter.MoveNext());
@@ -85,4 +87,5 @@
 				x => Assert.Equal("Three", x));
 		}
 	}
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
 }

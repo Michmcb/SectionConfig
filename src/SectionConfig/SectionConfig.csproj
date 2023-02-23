@@ -1,11 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;netstandard2.0</TargetFrameworks>
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>1.0</Version>
+    <Version>1.1</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -16,8 +16,16 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Made it simpler to have an empty string as a key's value; quotes are no longer needed. Instead, the next line has to just not be more indented.
-- Now, multiline strings have to be indented by more than what their key was.</PackageReleaseNotes>
+    <PackageReleaseNotes>- SectionCfgReader and SectionCfgWriter made obsolete, and CfgStreamReader and CfgStreamWriter are the preferred classes now. The boolean param controlling disposal is now leaveOpen instead of closeInput, to match .NET.
+- New method for writing a blank line (if a blank line is syntactically valid at that point)
+- CfgLoader made static
+- ICfgLoader interface added, which should be the preferred way of loading a stream into an object
+- CfgRootCfgLoader is what makes a CfgRoot now
+- DictionaryCfgLoader added to load data into a dictionary&lt;string, string&gt;
+- Documentation improved in some places
+- Fixed a bug which caused comments to be written with incorrect indentation
+- Fixed a bug which caused a value that starts or ends with a newline to be written quoted when it could have been written multiline instead. This did not cause incorrect data to be written, just data that is not formatted according to Multiline/Quoting properties
+- If Multiline is set to AlwaysIfPossible, then empty values will be written as an empty multiline value instead of an empty quoted value</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

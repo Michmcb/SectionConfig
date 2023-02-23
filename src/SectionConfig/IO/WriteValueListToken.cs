@@ -7,9 +7,9 @@
 	/// </summary>
 	public readonly struct WriteValueListToken : IDisposable
 	{
-		private readonly SectionCfgWriter writer;
+		private readonly CfgStreamWriter writer;
 		private readonly int id;
-		internal WriteValueListToken(SectionCfgWriter writer, int id)
+		internal WriteValueListToken(CfgStreamWriter writer, int id)
 		{
 			this.writer = writer;
 			this.id = id;
@@ -17,6 +17,7 @@
 		/// <summary>
 		/// Closes the value list. Throws <see cref="InvalidOperationException"/> if this value list has already been closed.
 		/// </summary>
+		/// <exception cref="InvalidOperationException"/>
 		public void Close()
 		{
 			writer.WriteCloseValueList(id);

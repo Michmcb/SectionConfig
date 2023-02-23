@@ -183,8 +183,10 @@
 					else if (incoming.IsValueList(out CfgValueList? incomingList) && existing.IsValue(out CfgValue? existingValue))
 					{
 						target.Remove(existing.Key);
-						List<string> newList = new(incomingList.Values.Count + 1);
-						newList.Add(existingValue.Value);
+						List<string> newList = new(incomingList.Values.Count + 1)
+						{
+							existingValue.Value
+						};
 						newList.AddRange(incomingList.Values);
 						ae = target.TryAdd(new CfgValueList(incomingList.Key, newList));
 						Debug.Assert(ae == AddError.Ok, "A newly-created CfgValueList was added to a recipient which does not have that key, and it failed!");

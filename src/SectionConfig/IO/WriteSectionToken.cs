@@ -7,9 +7,9 @@
 	/// </summary>
 	public readonly struct WriteSectionToken : IDisposable
 	{
-		private readonly SectionCfgWriter writer;
+		private readonly CfgStreamWriter writer;
 		private readonly int id;
-		internal WriteSectionToken(SectionCfgWriter writer, int id)
+		internal WriteSectionToken(CfgStreamWriter writer, int id)
 		{
 			this.writer = writer;
 			this.id = id;
@@ -17,6 +17,7 @@
 		/// <summary>
 		/// Closes the section. Throws <see cref="InvalidOperationException"/> if a section is closed out of order, or if this section has already been closed.
 		/// </summary>
+		/// <exception cref="InvalidOperationException"/>
 		public void Close()
 		{
 			writer.WriteCloseSection(id);

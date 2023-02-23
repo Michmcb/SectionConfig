@@ -13,22 +13,38 @@
 		/// Creates a new instance.
 		/// </summary>
 		/// <param name="writer">The writer to write to.</param>
-		/// <param name="closeWriter">If true, will dispose of <paramref name="writer"/> when this class is disposed of.</param>
-		public FluentSectionCfgWriter(SectionCfgWriter writer, bool closeWriter = true)
+		/// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="writer"/> open after this <see cref="CfgStreamWriter"/> is disposed. Otherwise, <see langword="false"/>.</param>
+		public FluentSectionCfgWriter(CfgStreamWriter writer, bool leaveOpen = false)
 		{
 			cantUse = false;
-			Writer = writer;
-			CloseWriter = closeWriter;
+			CfgStreamWriter = writer;
+			LeaveOpen = leaveOpen;
 		}
+		/// <summary>
+		/// Creates a new instance.
+		/// </summary>
+		/// <param name="writer">The writer to write to.</param>
+		/// <param name="closeWriter">If true, will dispose of <paramref name="writer"/> when this class is disposed of.</param>
+		[Obsolete("Prefer " + nameof(IO.CfgStreamWriter) + ", which uses leaveOpen instead of closeInput like .NET streams do.")]
+		public FluentSectionCfgWriter(SectionCfgWriter writer, bool closeWriter = true) : this(writer.CfgStreamWriter, !closeWriter) { }
 		/// <summary>
 		/// The writer to write to.
 		/// </summary>
-		public SectionCfgWriter Writer { get; }
+		public CfgStreamWriter CfgStreamWriter { get; }
 		/// <summary>
-		/// If true, disposes of <see cref="Writer"/> when this class is disposed of.
+		/// Legacy property which creates a new <see cref="SectionCfgWriter"/> that wraps <see cref="CfgStreamWriter"/>.
+		/// </summary>
+		[Obsolete("Prefer " + nameof(CfgStreamWriter) + "")]
+		public SectionCfgWriter Writer => new(CfgStreamWriter);
+		/// <summary>
+		/// <see langword="true"/> to leave <see cref="CfgStreamWriter"/> open after this <see cref="FluentSectionCfgWriter"/> is disposed. Otherwise, false.
+		/// </summary>
+		public bool LeaveOpen { get; set; }
+		/// <summary>
+		/// If true, disposes of <see cref="CfgStreamWriter"/> when this class is disposed of.
 		/// Otherwise disposal of this class does nothing.
 		/// </summary>
-		public bool CloseWriter { get; set; }
+		public bool CloseWriter => !LeaveOpen;
 		/// <summary>
 		/// Writes a key and value.
 		/// </summary>
@@ -38,7 +54,7 @@
 		public FluentSectionCfgWriter Value(CfgKey key, ReadOnlySpan<char> value)
 		{
 			ThrowIfCantUse();
-			Writer.WriteKeyValue(key, value);
+			CfgStreamWriter.WriteKeyValue(key, value);
 			return this;
 		}
 		/// <summary>
@@ -50,7 +66,17 @@
 		public FluentSectionCfgWriter Comment(ReadOnlySpan<char> comment, bool replaceLineBreaks = true)
 		{
 			ThrowIfCantUse();
-			Writer.WriteComment(comment, replaceLineBreaks);
+			CfgStreamWriter.WriteComment(comment, replaceLineBreaks);
+			return this;
+		}
+		/// <summary>
+		/// Writes a new line with indentation
+		/// </summary>
+		/// <returns>this.</returns>
+		public FluentSectionCfgWriter NewLine()
+		{
+			ThrowIfCantUse();
+			CfgStreamWriter.WriteNewLine();
 			return this;
 		}
 		/// <summary>
@@ -63,8 +89,8 @@
 		{
 			ThrowIfCantUse();
 			cantUse = true;
-			WriteSectionToken t = Writer.WriteKeyOpenSection(key);
-			section(new(Writer, closeWriter: false));
+			WriteSectionToken t = CfgStreamWriter.WriteKeyOpenSection(key);
+			section(new(CfgStreamWriter, leaveOpen: true));
 			t.Close();
 			cantUse = false;
 			return this;
@@ -78,7 +104,7 @@
 		public FluentSectionCfgWriter ValueList(CfgKey key, ReadOnlySpan<char> value)
 		{
 			ThrowIfCantUse();
-			WriteValueListToken t = Writer.WriteKeyOpenValueList(key);
+			WriteValueListToken t = CfgStreamWriter.WriteKeyOpenValueList(key);
 			t.WriteListValue(value);
 			t.Close();
 			return this;
@@ -114,7 +140,7 @@
 		public FluentSectionCfgWriter ValueList(CfgKey key, IEnumerable<string> values)
 		{
 			ThrowIfCantUse();
-			WriteValueListToken t = Writer.WriteKeyOpenValueList(key);
+			WriteValueListToken t = CfgStreamWriter.WriteKeyOpenValueList(key);
 			foreach (string v in values)
 			{
 				t.WriteListValue(v.AsSpan());
@@ -126,7 +152,7 @@
 		{
 			if (cantUse)
 			{
-				throw new InvalidOperationException("You can't use the outer CfgBuilder whilst you have created an inner CfgBuilder for writing a section.");
+				throw new InvalidOperationException("You can't use the outer CfgBuilder while you have created an inner CfgBuilder for writing a section.");
 			}
 		}
 		/// <summary>
@@ -136,7 +162,7 @@
 		{
 			if (CloseWriter)
 			{
-				Writer.Dispose();
+				CfgStreamWriter.Dispose();
 			}
 		}
 	}

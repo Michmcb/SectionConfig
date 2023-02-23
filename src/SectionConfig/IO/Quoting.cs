@@ -14,11 +14,11 @@
 		/// </summary>
 		SingleIfNeeded,
 		/// <summary>
-		/// Always apply "double quotes". Causes strings to never be written multiline.
+		/// Always apply "double quotes". Strings will never be written multiline.
 		/// </summary>
 		AlwaysDouble,
 		/// <summary>
-		/// Always apply 'single quotes'. Causes strings to never be written multiline.
+		/// Always apply 'single quotes'. Strings will never be written multiline.
 		/// </summary>
 		AlwaysSingle,
 	}

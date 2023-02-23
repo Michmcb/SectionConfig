@@ -10,7 +10,7 @@ Everything is a string. This config file format does not mandate any kind of dat
 
 
 ### Key
-A Key is used to refer to the following element. This is either a section, value, or value list. Keys can't contain any of # : { } or newline characters. Leading or trailing whitespace is ignored.
+A Key is used to refer to the following element. This is either a section, value, or value list. Keys can't contain any of # : { } or newline characters, but they can contain spaces. Leading or trailing whitespace is ignored.
 A Key has to be unique within its section.
 The path of something is composed of every key of each parent section, followed by the key referring to the element. Each key is separated by a colon (:).
 
@@ -73,10 +73,10 @@ Key:
       spans many lines
    and doesn't include the indentation
 
-# The indentation determines if text is a multiline value or an empty value. Because NotEmpty is not more indented than Empty, it is not considered a multiline value. However because NotEmpty has text on the next line that is more indented than itself, "NotAKey:" is the text value of NotEmpty.
+# The indentation determines if text is a multiline value or an empty value. Because Not Empty is not more indented than Empty, it is not considered a multiline value. However because Not Empty has text on the next line that is more indented than itself, "Not A Key:" is the text value of Not Empty.
 Empty:
-NotEmpty:
-   NotAKey:
+Not Empty:
+   Not A Key:
 
 # Quoted values, even if they start on the next line, are still 100% literal. So this value will include the 3 spaces of indentation on the 3rd and 4th lines.
 Key:

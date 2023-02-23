@@ -60,7 +60,6 @@
 				return Unsafe.As<string>(val);
 			}
 		}
-#if !NETSTANDARD2_0
 		/// <summary>
 		/// If this is a string, returns the string.
 		/// If this is an array, returns all elements of the array concatenated, separated by <paramref name="separator"/>.
@@ -71,14 +70,17 @@
 			if (array)
 			{
 				string[] arr = Unsafe.As<string[]>(val);
+#if NETSTANDARD2_0
+				return arr.Length >= 1 ? string.Join(separator.ToString(), arr) : null;
+#else
 				return arr.Length >= 1 ? string.Join(separator, arr) : null;
+#endif
 			}
 			else
 			{
 				return Unsafe.As<string>(val);
 			}
 		}
-#endif
 		/// <summary>
 		/// If this is a string, returns the string.
 		/// If this is an array, returns all elements of the array concatenated, separated by <paramref name="separator"/>.

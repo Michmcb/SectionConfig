@@ -7,6 +7,7 @@
 	using Xunit;
 	public static class Helper
 	{
+#pragma warning disable CS0618 // Type or member is obsolete
 		public static void AssertReadMatches(SectionCfgReader scr, IEnumerable<ReadResult> results)
 		{
 			foreach (ReadResult er in results)
@@ -29,9 +30,31 @@
 				Assert.Equal(SectionCfgToken.End, ar.Token);
 			}
 		}
-		public static CfgRoot LoadsProperly(SectionCfgReader scr, StringComparer stringComparer)
+		public static void AssertReadMatches(CfgStreamReader scr, IEnumerable<ReadResult> results)
 		{
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> lr = CfgLoader.TryLoad(scr, stringComparer);
+			foreach (ReadResult er in results)
+			{
+				ReadResult ar = scr.Read();
+				Assert.Equal(er.Token, ar.Token);
+				Assert.Equal(er.Key, ar.Key);
+				Assert.Equal(er.Content, ar.Content);
+			}
+			if (scr.State == ReadStreamState.Error)
+			{
+				ReadResult ar = scr.Read();
+				Assert.Equal(SectionCfgToken.Error, ar.Token);
+				Assert.Equal(default, ar.Key);
+				Assert.Equal("Encountered error, cannot read further", ar.Content);
+			}
+			else
+			{
+				ReadResult ar = scr.Read();
+				Assert.Equal(SectionCfgToken.End, ar.Token);
+			}
+		}
+		public static CfgRoot LoadsProperly(CfgStreamReader scr, StringComparer stringComparer)
+		{
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> lr = new CfgRootCfgLoader(stringComparer).TryLoad(scr);
 			CfgRoot root = lr.ValueOrException();
 			ErrMsg<LoadError> err = lr.Error;
 			Assert.Equal(LoadError.Ok, err.Code);
@@ -49,5 +72,6 @@
 				Assert.Equal(kvp.Value, cv.Value);
 			}
 		}
+#pragma warning restore CS0618 // Type or member is obsolete
 	}
 }

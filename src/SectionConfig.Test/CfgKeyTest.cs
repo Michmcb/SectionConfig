@@ -1,6 +1,7 @@
 ﻿namespace SectionConfig.Test
 {
 	using SectionConfig.IO;
+	using System;
 	using Xunit;
 
 	public static class CfgKeyTest
@@ -43,14 +44,24 @@
 		[Fact]
 		public static void Equality()
 		{
-			Assert.True(CfgKey.Create("Key") == CfgKey.Create("Key"));
-			Assert.True(CfgKey.Create("Key").Equals(CfgKey.Create("Key")));
-			Assert.True(CfgKey.Create("Key").Equals((object?)CfgKey.Create("Key")));
-			Assert.False(CfgKey.Create("Key").Equals(null));
-			Assert.False(CfgKey.Create("Key") != CfgKey.Create("Key"));
+			CfgKey key = CfgKey.Create("Key");
+			Assert.Equal("Key", key.ToString());
+			Assert.Equal(key.KeyString.GetHashCode(), key.GetHashCode());
 
-			Assert.Equal("Key", CfgKey.Create("Key").ToString());
-			Assert.Equal("Key".GetHashCode(), CfgKey.Create("Key").GetHashCode());
+			foreach ((CfgKey key1, CfgKey key2) in new (CfgKey, CfgKey)[]
+			{
+				(CfgKey.Create("Key"), CfgKey.Create("Key")),
+				(default(CfgKey), default(CfgKey))
+			})
+			{
+				Assert.True(key1 == key2);
+				Assert.True(key1.Equals(key2));
+				Assert.True(key1.Equals((object?)key2));
+				Assert.False(key1.Equals(null));
+				Assert.False(key2.Equals(null));
+				Assert.False(key1 != key2);
+				Assert.Equal(key1.GetHashCode(), key2.GetHashCode());
+			}
 		}
 	}
 }

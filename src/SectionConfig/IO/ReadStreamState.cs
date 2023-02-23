@@ -1,7 +1,7 @@
 ﻿namespace SectionConfig.IO
 {
 	/// <summary>
-	/// The state of a <see cref="SectionCfgWriter"/>.
+	/// The state of a <see cref="CfgStreamReader"/>.
 	/// </summary>
 	public enum ReadStreamState
 	{

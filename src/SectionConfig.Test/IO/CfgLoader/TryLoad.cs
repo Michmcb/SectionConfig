@@ -5,7 +5,6 @@
 	using System.IO;
 	using System.Text;
 	using Xunit;
-
 	public static class TryLoad
 	{
 		private static void Check(CfgRoot root)
@@ -23,8 +22,22 @@
 		[Fact]
 		public static void WorksFine()
 		{
+			using CfgStreamReader scr = new(new StringReader("Section{Key:Value\n}"));
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = new CfgRootCfgLoader().TryLoad(scr);
+			Assert.NotNull(result.Value);
+
+			Assert.Equal(LoadError.Ok, result.Error.Code);
+			// null should default to ordinal
+			Assert.Equal(StringComparer.Ordinal, result.Value!.KeyComparer);
+
+			Check(result.Value!);
+		}
+		[Fact]
+		[Obsolete("Testing obsolete stuff")]
+		public static void WorksFineObsolete()
+		{
 			using SectionCfgReader scr = new(new StringReader("Section{Key:Value\n}"));
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(scr, keyComparer: null);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(scr);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -36,8 +49,21 @@
 		[Fact]
 		public static void WorksFineFile()
 		{
+			CfgRootCfgLoader loader = new();
 			File.WriteAllText("WorksFineFile.scfg", "Section{Key:Value\n}", Encoding.UTF8);
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad("file.scfg", Encoding.UTF8, StringComparer.Ordinal);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad("WorksFineFile.scfg", Encoding.UTF8, loader);
+			Assert.NotNull(result.Value);
+
+			Assert.Equal(LoadError.Ok, result.Error.Code);
+
+			Check(result.Value!);
+		}
+		[Fact]
+		[Obsolete("Testing obsolete stuff")]
+		public static void WorksFineFileObsolete()
+		{
+			File.WriteAllText("WorksFineFileObsolete.scfg", "Section{Key:Value\n}", Encoding.UTF8);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad("WorksFineFileObsolete.scfg", Encoding.UTF8, keyComparer: null);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -47,8 +73,21 @@
 		[Fact]
 		public static void WorksFineTextReader()
 		{
+			CfgRootCfgLoader loader = new();
 			using TextReader tr = new StringReader("Section{Key:Value\n}");
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, StringComparer.Ordinal);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, loader);
+			Assert.NotNull(result.Value);
+
+			Assert.Equal(LoadError.Ok, result.Error.Code);
+
+			Check(result.Value!);
+		}
+		[Fact]
+		[Obsolete("Testing obsolete stuff")]
+		public static void WorksFineTextReaderObsolete()
+		{
+			using TextReader tr = new StringReader("Section{Key:Value\n}");
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -58,8 +97,21 @@
 		[Fact]
 		public static void WorksFineStreamReader()
 		{
+			CfgRootCfgLoader loader = new();
 			using StreamReader tr = new (new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, StringComparer.Ordinal);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, loader);
+			Assert.NotNull(result.Value);
+
+			Assert.Equal(LoadError.Ok, result.Error.Code);
+
+			Check(result.Value!);
+		}
+		[Fact]
+		[Obsolete("Testing obsolete stuff")]
+		public static void WorksFineStreamReaderObsolete()
+		{
+			using StreamReader tr = new(new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -69,8 +121,8 @@
 		[Fact]
 		public static void DuplicateKey()
 		{
-			using SectionCfgReader scr = new(new StringReader("Section{Section2{Key:Value\nKey:Value}}"));
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(scr, StringComparer.Ordinal);
+			using CfgStreamReader scr = new(new StringReader("Section{Section2{Key:Value\nKey:Value}}"));
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = new CfgRootCfgLoader().TryLoad(scr);
 			Assert.Null(result.Value);
 
 			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
@@ -79,7 +131,7 @@
 		[Fact]
 		public static void MalformedStream()
 		{
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{"));
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{"), new CfgRootCfgLoader());
 			Assert.Null(result.Value);
 			Assert.Equal(LoadError.MalformedStream, result.Error.Code);
 			Assert.Equal("Found end of stream when there were still 1 sections to close", result.Error.Message);
@@ -87,7 +139,7 @@
 		[Fact]
 		public static void DuplicateKeyList()
 		{
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key:{}Key:{}"));
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key:{}Key:{}"), new CfgRootCfgLoader());
 			Assert.Null(result.Value);
 			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
 			Assert.Equal("Duplicate key \":Key\" was found", result.Error.Message);
@@ -95,7 +147,7 @@
 		[Fact]
 		public static void DuplicateKeySection()
 		{
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{}Key{}"));
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(new StringReader("Key{}Key{}"), new CfgRootCfgLoader());
 			Assert.Null(result.Value);
 			Assert.Equal(LoadError.DuplicateKey, result.Error.Code);
 			Assert.Equal("Duplicate key \":Key\" was found", result.Error.Message);

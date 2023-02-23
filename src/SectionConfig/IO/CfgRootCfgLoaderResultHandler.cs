@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	internal sealed class ReadResultHandler
+	internal sealed class CfgRootCfgLoaderResultHandler
 	{
 #if NETSTANDARD2_0
 		private const string KeySep = ":";
@@ -15,14 +15,14 @@
 		private ICfgObjectParent section;
 		private CfgValueList valueList;
 		private readonly Stack<ICfgObjectParent> parentSections;
-		public ReadResultHandler(CfgRoot root)
+		internal CfgRootCfgLoaderResultHandler(CfgRoot root)
 		{
 			this.root = root;
 			section = root;
 			valueList = null!;
 			parentSections = new();
 		}
-		public ValOrErr<CfgRoot, ErrMsg<LoadError>> Result { get; private set; }
+		internal ValOrErr<CfgRoot, ErrMsg<LoadError>> Result { get; private set; }
 		/// <summary>
 		/// Returns true if end or error encountered, false otherwise.
 		/// </summary>
@@ -88,3 +88,4 @@
 		}
 	}
 }
+

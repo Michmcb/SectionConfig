@@ -10,39 +10,39 @@ namespace SectionConfig.Test.IO
 		[Fact]
 		public static void GeneralExmaple()
 		{
-			string s = @"
-Key 1:     Blah    
-Key 2: 'Blah'
-# Some comment   
-	Key3: 'Blah'
-Key 4:
-	This is a multiline value
-	It will just keep going
-	Until we find lesser indentation
-		This is still part of the string
-	Done
-
-	Key 5:
-		Aligned, still
-		a multiline value.
-Section{
-	Key:
-		'Also a multiline string
-		It just keeps going too'
-
-}
-List:{
-	String 1
-	""String 2""
-	# A comment
-	'String 3'
-	'String
-	4'
-	""String
-	5""
-}
-";
-			// TODO have to decide how we're going to have the ability to have a multiline string within a string list
+			string s = "\n" +
+"Key 1:     Blah    \n" +
+"Key 2: 'Blah'\n" +
+"# Some comment   \n" +
+"	Key3: 'Blah'\n" +
+"Key 4:\n" +
+"	This is a multiline value\n" +
+"	It will just keep going\n" +
+"	Until we find lesser indentation\n" +
+"		This is still part of the string\n" +
+"	Done\n" +
+"\n" +
+"	Key 5:\n" +
+"		Aligned, still\n" +
+"		a multiline value.\n" +
+"Section{\n" +
+"	Key:\n" +
+"		'Also a multiline string\n" +
+"		It just keeps going too'\n" +
+"\n" +
+"}\n" +
+"List:{\n" +
+"	String 1\n" +
+"	\"String 2\"\n" +
+"	# A comment\n" +
+"	'String 3'\n" +
+"	\n" +
+"	'String\n" +
+"	4'\n" +
+"	\"String\n" +
+"	5\"\n" +
+"}\n";
+			// TODO have to decide how we're going to have the ability to have a multiline string within a string list. See below for how YAML does it. When/if we implement this, SectionCfgWriter has to be able to write multilines properly, too.
 
 			// This is how YAML does it. Basically each string is an item in a sequence, and the multiline string specifies > (multiline string). it's >- cause the library meant "block chomping".
 			/*
@@ -62,33 +62,41 @@ List:{
 				: 'String 7'
 				: String
 			 */
+
+			CfgKey s1 = CfgKey.Create("Section");
+			CfgKey l1 = CfgKey.Create("List");
+			var readResults = new ReadResult[]
+			{
+				new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Blah"),
+				new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Blah"),
+				new(SectionCfgToken.Comment, default, " Some comment   "),
+				new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Blah"),
+				new(SectionCfgToken.Value, CfgKey.Create("Key 4"), "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
+				new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Aligned, still\na multiline value."),
+				new(SectionCfgToken.StartSection, s1),
+				new(SectionCfgToken.Value, CfgKey.Create("Key"), "Also a multiline string\n\t\tIt just keeps going too"),
+				new(SectionCfgToken.EndSection, s1),
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.ListValue, l1, "String 1"),
+				new(SectionCfgToken.ListValue, l1, "String 2"),
+				new(SectionCfgToken.Comment, default, " A comment"),
+				new(SectionCfgToken.ListValue, l1, "String 3"),
+				new(SectionCfgToken.ListValue, l1, "String\n\t4"),
+				new(SectionCfgToken.ListValue, l1, "String\n\t5"),
+				new(SectionCfgToken.EndList, l1),
+				new(SectionCfgToken.End),
+			};
+			using (CfgStreamReader scr = new(new StringReader(s)))
+			{
+				Helper.AssertReadMatches(scr, readResults);
+			}
+#pragma warning disable CS0618 // Type or member is obsolete
 			using (SectionCfgReader scr = new(new StringReader(s)))
 			{
-				CfgKey s1 = CfgKey.Create("Section");
-				CfgKey l1 = CfgKey.Create("List");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Blah"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Blah"),
-					new(SectionCfgToken.Comment, default, " Some comment   "),
-					new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Blah"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 4"), "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Aligned, still\na multiline value."),
-					new(SectionCfgToken.StartSection, s1),
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Also a multiline string\n\t\tIt just keeps going too"),
-					new(SectionCfgToken.EndSection, s1),
-					new(SectionCfgToken.StartList, l1),
-					new(SectionCfgToken.ListValue, l1, "String 1"),
-					new(SectionCfgToken.ListValue, l1, "String 2"),
-					new(SectionCfgToken.Comment, default, " A comment"),
-					new(SectionCfgToken.ListValue, l1, "String 3"),
-					new(SectionCfgToken.ListValue, l1, "String\n\t4"),
-					new(SectionCfgToken.ListValue, l1, "String\n\t5"),
-					new(SectionCfgToken.EndList, l1),
-					new(SectionCfgToken.End),
-				});
+				Helper.AssertReadMatches(scr, readResults);
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+#pragma warning restore CS0618 // Type or member is obsolete
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Assert.Equal(7, root.Elements.Count);
@@ -112,17 +120,36 @@ List:{
 			}
 		}
 		[Fact]
+		public static void ObsoleteReader()
+		{
+#pragma warning disable CS0618 // Type or member is obsolete
+			using SectionCfgReader scr = new(new StringReader("Key:Value"));
+#pragma warning restore CS0618 // Type or member is obsolete
+			var csr = scr.CfgStreamReader;
+			Assert.Equal(csr, scr.CfgStreamReader);
+			Assert.Equal(csr.Reader, scr.Reader);
+			Assert.True(scr.CloseInput);
+			Assert.False(csr.LeaveOpen);
+			Assert.Equal(csr.State, scr.State);
+			Assert.Equal(csr.SectionLevel, scr.SectionLevel);
+
+			scr.CloseInput = true;
+			Assert.False(csr.LeaveOpen);
+			scr.CloseInput = false;
+			Assert.True(csr.LeaveOpen);
+		}
+		[Fact]
 		public static void Empty()
 		{
 			string s = "";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Assert.Empty(root.Elements.Values);
@@ -132,7 +159,7 @@ List:{
 		public static void EmptyValue()
 		{
 			string s = "Key:";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -140,7 +167,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -149,10 +176,36 @@ List:{
 			}
 		}
 		[Fact]
+		public static void EmptyMultilineValue()
+		{
+			foreach (string s in new string[] {
+				"Key:\n",
+				"Key:\n\t",
+				"Key:\n\t\n",
+			})
+			{
+				using (CfgStreamReader scr = new(new StringReader(s)))
+				{
+					Helper.AssertReadMatches(scr, new ReadResult[]
+					{
+					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
+					new(SectionCfgToken.End),
+					});
+				}
+				using (CfgStreamReader scr = new(new StringReader(s)))
+				{
+					CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
+					Helper.AssertKeyValues(root,
+						new KeyValuePair<string, string>("Key", "")
+					);
+				}
+			}
+		}
+		[Fact]
 		public static void EmptyValueAndMultilineValue()
 		{
 			string s = "Key1:\nKey2:\n\tvalue\n\n\tKey3:\n\tKey4:\n\t\tvalue\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -163,7 +216,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -178,7 +231,7 @@ List:{
 		public static void ManyEmptyKeys()
 		{
 			string s = "\tKey1:\n\tKey2:\n\tKey3:\nKey4:\nKey5:\nKey6:\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -191,7 +244,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -208,7 +261,7 @@ List:{
 		public static void MultilineNotTreatedAsKey()
 		{
 			string s = "Key1:\n\tNotAKey:\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -216,7 +269,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -228,7 +281,7 @@ List:{
 		public static void EmptyValueDecreasingIndentation()
 		{
 			string s = "\t\t\tKey1:\n\t\tKey2:\n\tKey3:\nKey4:\nKey5:\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -240,7 +293,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -256,7 +309,7 @@ List:{
 		public static void IncreasingIndentationMultiline()
 		{
 			string s = "Key:\n\tThis value:\n\tis not a key!";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -264,7 +317,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -276,7 +329,7 @@ List:{
 		public static void EmptyValueIncreasingIndentationThenMultiline()
 		{
 			string s = "Key1:\nKey2:\n\tThis value:\n\tis not a key!";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -285,7 +338,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -298,7 +351,7 @@ List:{
 		public static void EmptyValueSingleQuoted()
 		{
 			string s = "Key:''";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -306,7 +359,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -318,7 +371,7 @@ List:{
 		public static void EmptyValueDoubleQuoted()
 		{
 			string s = "\nKey:\"\"";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -326,7 +379,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -338,7 +391,7 @@ List:{
 		public static void KeyQuotedValueThenKeyUnquoted()
 		{
 			string s = "Key1:'Value1'\nKey2:Value2";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -347,7 +400,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -360,7 +413,7 @@ List:{
 		public static void EmptyComment()
 		{
 			string s = "#";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -368,7 +421,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Assert.Empty(root.Elements.Values);
@@ -378,7 +431,7 @@ List:{
 		public static void EscapedDoubleQuote()
 		{
 			string s = "Key:\"\"\"\"";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -386,7 +439,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -398,7 +451,7 @@ List:{
 		public static void EscapedSingleQuote()
 		{
 			string s = "Key:''''";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -406,7 +459,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -418,7 +471,7 @@ List:{
 		public static void KeyValue()
 		{
 			string s = "Key:Value";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -426,7 +479,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -438,7 +491,7 @@ List:{
 		public static void KeyValueComment()
 		{
 			string s = "Key:'Value' #Explanation";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -447,7 +500,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -459,7 +512,7 @@ List:{
 		public static void KeyValueStartingWithNumberSign()
 		{
 			string s = "Key:#This is a very important string!";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -467,7 +520,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -479,7 +532,7 @@ List:{
 		public static void KeyValueNoWhitespace()
 		{
 			string s = "   Key		: Value	";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -487,7 +540,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -499,7 +552,7 @@ List:{
 		public static void KeyValueDoubleQuoted()
 		{
 			string s = "Key:\"'Value's all good!'\"";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -507,7 +560,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -519,7 +572,7 @@ List:{
 		public static void KeyValueSingleQuoted()
 		{
 			string s = "Key:'\"Value \"is\" all good!\"'";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -527,7 +580,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -539,7 +592,7 @@ List:{
 		public static void ManyKeyValues()
 		{
 			string s = "Key 1:\tValue1\nKey 2:\t'Value 2'\n Key 3 : Value 3\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -549,7 +602,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -563,7 +616,7 @@ List:{
 		public static void MultilineUnquotedValueLf()
 		{
 			string s = "Key:\n\tThis value\n\tspans many lines";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -571,7 +624,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -584,7 +637,7 @@ List:{
 		{
 			// Trailing newlines are removed
 			string s = "Key:\n\tThis value\n\tspans many lines\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -592,7 +645,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -605,7 +658,7 @@ List:{
 		{
 			// In a text editor, another line of indentation makes it appear as if the multiline value has a blank last line, hence why we should have a trailing newline
 			string s = "Key:\n\tThis value\n\tspans many lines\n\t";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -613,7 +666,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -625,7 +678,7 @@ List:{
 		public static void MultilineUnquotedValueCrLf()
 		{
 			string s = "Key:\r\n\tThis value\r\n\tspans many lines";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -633,7 +686,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -645,7 +698,7 @@ List:{
 		public static void MultilineUnquotedValueCrLfTrailingNewline()
 		{
 			string s = "Key:\r\n\tThis value\r\n\tspans many lines\r\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -653,7 +706,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -668,7 +721,7 @@ List:{
 		public static void SinglelineUnquotedValueCr()
 		{
 			string s = "Key:\r\tThis value\r\tspans many lines";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -676,7 +729,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -691,7 +744,7 @@ List:{
 		public static void SinglelineUnquotedValueCrTrailingCr()
 		{
 			string s = "Key:\r\tThis value\r\tspans many lines\r";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -699,7 +752,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -711,7 +764,7 @@ List:{
 		public static void MultilineUnquotedValueMixed()
 		{
 			string s = "Key:\n\tThis value\n\tspans\r\tmany\r\n\tlines\n";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -719,7 +772,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -731,7 +784,7 @@ List:{
 		public static void MultilineQuotedValue()
 		{
 			string s = "Key:\n\"This value\nspans many\n\tlines\"";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				Helper.AssertReadMatches(scr, new ReadResult[]
 				{
@@ -739,7 +792,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				Helper.AssertKeyValues(root,
@@ -751,7 +804,7 @@ List:{
 		public static void Section()
 		{
 			string s = "Section{}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey k1 = CfgKey.Create("Section");
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -761,7 +814,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
@@ -772,7 +825,7 @@ List:{
 		public static void NestedSections()
 		{
 			string s = "Section1{Section2{Section3{Section4{}}}}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey s1 = CfgKey.Create("Section1");
 				CfgKey s2 = CfgKey.Create("Section2");
@@ -791,7 +844,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgSection section1 = Assert.IsType<CfgSection>(root.Elements["Section1"]);
@@ -808,7 +861,7 @@ List:{
 		public static void SectionValue()
 		{
 			string s = "Section{Key1:Value1\nKey2:Value2\nKey3:Value3\n}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey s1 = CfgKey.Create("Section");
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -821,7 +874,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
@@ -836,7 +889,7 @@ List:{
 		public static void List()
 		{
 			string s = "Section{Key :{One\n#Comment\nTwo\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey s1 = CfgKey.Create("Section");
 				CfgKey l1 = CfgKey.Create("Key");
@@ -855,7 +908,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
@@ -871,7 +924,7 @@ List:{
 		public static void QuotedListNoSpaces()
 		{
 			string s = "List:{\"One\"'Two'\"Three\"'Four'}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -885,7 +938,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
@@ -900,7 +953,7 @@ List:{
 		public static void QuotedListSpaces()
 		{
 			string s = "List:{\"One\" \"One\" \"'Two'\" 'Three' '\"Four\"'}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey l1 = CfgKey.Create("List");
 				Helper.AssertReadMatches(scr, new ReadResult[]
@@ -915,7 +968,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
@@ -937,7 +990,7 @@ List:{
 				"\t\tThree'\n" +
 				"    \"Four\n" +
 				"    Four\"}}";
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey s1 = CfgKey.Create("Section");
 				CfgKey l1 = CfgKey.Create("List");
@@ -954,7 +1007,7 @@ List:{
 					new(SectionCfgToken.End),
 				});
 			}
-			using (SectionCfgReader scr = new(new StringReader(s)))
+			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
 				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);

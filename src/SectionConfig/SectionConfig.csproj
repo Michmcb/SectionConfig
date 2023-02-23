@@ -12,6 +12,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Description>A .NET library which allows you to read and write plain-text minimal syntax configuration files. As the name implies, you can have sections and subsections as well.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/Michmcb/SectionConfig</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
@@ -40,6 +41,7 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <ItemGroup>

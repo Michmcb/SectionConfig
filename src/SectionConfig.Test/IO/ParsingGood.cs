@@ -888,7 +888,7 @@ namespace SectionConfig.Test.IO
 		[Fact]
 		public static void List()
 		{
-			string s = "Section{Key :{One\n#Comment\nTwo\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
+			string s = "Section{Key :{One\n#Comment\nTwo\n\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
 			using (CfgStreamReader scr = new(new StringReader(s)))
 			{
 				CfgKey s1 = CfgKey.Create("Section");

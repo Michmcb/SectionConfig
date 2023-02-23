@@ -62,7 +62,8 @@ Key: Nor "does" this
 # You need quotes to include leading/trailing whitespace
 Key: " Value with whitespace "
 
-# You don't need to use quotes to denote an empty value. All 3 of these are equivalent.
+# You don't need to use quotes to denote an empty value, although you can if you want.
+# All 3 of these are equivalent.
 Key1:
 Key2: ""
 Key3: ''
@@ -73,12 +74,14 @@ Key:
       spans many lines
    and doesn't include the indentation
 
-# The indentation determines if text is a multiline value or an empty value. Because Not Empty is not more indented than Empty, it is not considered a multiline value. However because Not Empty has text on the next line that is more indented than itself, "Not A Key:" is the text value of Not Empty.
+# The indentation determines if text is a multiline value or an empty value.
+# Not Empty is not more indented than Empty, so it's not the value of Empty:. It is a separate key.
+# Because "The Value:" is indented more than "Not Empty:", it's considered the value with the key "Not Empty"
 Empty:
 Not Empty:
-   Not A Key:
+   The Value:
 
-# Quoted values, even if they start on the next line, are still 100% literal. So this value will include the 3 spaces of indentation on the 3rd and 4th lines.
+# Quoted values, even if they start on the next line, are still literal. So this value will include the 3 spaces of indentation on the 3rd and 4th lines.
 Key:
    "This value
    Spans many lines
@@ -99,9 +102,6 @@ Key: {
 	'also another value'
 }
 
-# If you have quoted values, you don't need to separate them with newlines (but you probably should anyway)
-Key: {"Compact list" "Each is a separate value" "Separated by just a space"}
-
 # Comments can be inside the value list as well
 Key: {
 	one
@@ -109,6 +109,21 @@ Key: {
 	two
 	three
 }
+
+# You can have blank lines within a list as well.
+# If you want empty strings within a list, you must quote them.
+# This list has 4 values: "one", "two", "three", and "" (empty string).
+Key: {
+	one
+	
+	two
+	
+	three
+	""
+}
+
+# If you have quoted values, you don't need to separate them with newlines
+Key: {"Compact list" "Each is a separate value" "Separated by just a space"}
 
 # A section with a nested section. Sections can contain anything. The full path of something is each key, separated by a colon (:). The full paths of each of the elements below are commented.
 

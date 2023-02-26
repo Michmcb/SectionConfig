@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>2.0</Version>
+    <Version>2.1</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -17,16 +17,7 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- New Method on ICfgObject, MatchType, which invokes a callback depending on the type
-- CfgBufferReader added, which reads blocks of data that's loaded into a buffer. CfgStreamReader is now essentially a wrapper around this type
-- CfgStreamReader supports Async operations
-- Carriage Return is now supported as a newline type
-- Obsolete methods and classes removed
-- CfgLoader has async helper methods
-- ICfgLoader&lt;T&gt; (and ICfgLoaderSync&lt;T&gt; / ICfgLoaderAsync&lt;T&gt;), which allows loaders to be created that produce a type of T
-- DictionaryCfgLoader, which loads data into a Dictionary&lt;string, Strings&gt;
-- Strings can now be implicitly cast from a lone string or an array of strings, and also constructed from a params array
-- Strings can be constructred from an IEnumerable&lt;string&gt;, and attempts to use TryGetNonEnumeratedCount to possibly avoid having to call ToArray()</PackageReleaseNotes>
+    <PackageReleaseNotes>- Fixed a bug which would cause a key directly following a comment to not be read correctly</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

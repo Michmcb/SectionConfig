@@ -6,7 +6,7 @@ A .NET library which allows you to load plain-text configuration files. This is 
 There are five different elements: Keys, Sections, Values, Value Lists, and Comments.
 Sections, Values, and Value Lists all have a Key.
 Everything is a string. This config file format does not mandate any kind of data types that are required to be used; that is up to the application parsing the file.
-"Newline" is either Linefeed or Carriage return followed by Linefeed. Carriage return alone is not considered a newline.
+"Newline" is any of: a Line Feed, a Carriage Return, or Carriage Return followed by Line Feed.
 
 
 ### Key

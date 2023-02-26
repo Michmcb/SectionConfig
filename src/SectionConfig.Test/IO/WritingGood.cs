@@ -101,69 +101,24 @@
 			Assert.Equal(Encoding.UTF8, writer.Encoding);
 			Assert.Equal("PathCtor.scfg", Path.GetFileName(fs.Name));
 		}
-#pragma warning disable CS0618 // Type or member is obsolete
-		[Fact]
-		public static void ObsoleteWriter()
-		{
-			using SectionCfgWriter scr = new(new StringWriter());
-			var csr = scr.CfgStreamWriter;
-			Assert.Equal(csr, scr.CfgStreamWriter);
-			Assert.Equal(csr.Writer, scr.Writer);
-
-			Assert.Equal(csr.Indentation, scr.Indentation);
-			Assert.Equal(csr.NewLine, scr.NewLine);
-			Assert.Equal(csr.Quoting, scr.Quoting);
-			Assert.Equal(csr.Multiline, scr.Multiline);
-
-			Assert.True(scr.CloseOutput);
-			Assert.False(csr.LeaveOpen);
-			Assert.Equal(csr.IndentationLevel, scr.IndentationLevel);
-			Assert.Equal(csr.SectionLevel, scr.SectionLevel);
-			Assert.Equal(csr.State, scr.State);
-
-			scr.CloseOutput = true;
-			Assert.False(csr.LeaveOpen);
-			scr.CloseOutput = false;
-			Assert.True(csr.LeaveOpen);
-		}
-#pragma warning restore CS0618 // Type or member is obsolete
 		[Fact]
 		public static void KeyValues()
 		{
-			using (StringWriter sw = new())
+			using StringWriter sw = new();
+			CfgStreamWriter scw = new(sw, newLine: NewLine.Lf);
+			using (scw)
 			{
-				CfgStreamWriter scw = new(sw, newLine: NewLine.Lf);
-				using (scw)
-				{
-					scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
-					scw.WriteKey(CfgKey.Create("Key2"));
-					scw.WriteValue("\"Value2\"");
-					scw.WriteKeyValue(CfgKey.Create("Key3"), "'Value3'");
-					scw.WriteKeyValue(CfgKey.Create("Key4"), "  Value4  ");
-					scw.WriteKeyValue(CfgKey.Create("Key5"), "Value5\nValue 5 still");
-				}
-				string expected = "Key1: Value1\nKey2: \"\"\"Value2\"\"\"\nKey3: \"'Value3'\"\nKey4: \"  Value4  \"\nKey5:\n\tValue5\n\tValue 5 still\n";
-				string actual = sw.ToString();
-				Assert.Equal(expected, actual);
-				Assert.Equal(WriteStreamState.End, scw.State);
+				scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
+				scw.WriteKey(CfgKey.Create("Key2"));
+				scw.WriteValue("\"Value2\"");
+				scw.WriteKeyValue(CfgKey.Create("Key3"), "'Value3'");
+				scw.WriteKeyValue(CfgKey.Create("Key4"), "  Value4  ");
+				scw.WriteKeyValue(CfgKey.Create("Key5"), "Value5\nValue 5 still");
 			}
-			using (StringWriter sw = new())
-			{
-#pragma warning disable CS0618 // Type or member is obsolete
-				SectionCfgWriter scw = new(sw, newLine: NewLine.Lf);
-#pragma warning restore CS0618 // Type or member is obsolete
-				using (scw)
-				{
-					scw.WriteKeyValue(CfgKey.Create("Key1"), "Value1");
-					scw.WriteKey(CfgKey.Create("Key2"));
-					scw.WriteValue("\"Value2\"");
-					scw.WriteKeyValue(CfgKey.Create("Key3"), "'Value3'");
-					scw.WriteKeyValue(CfgKey.Create("Key4"), "  Value4  ");
-					scw.WriteKeyValue(CfgKey.Create("Key5"), "Value5\nValue 5 still");
-				}
-				Assert.Equal("Key1: Value1\nKey2: \"\"\"Value2\"\"\"\nKey3: \"'Value3'\"\nKey4: \"  Value4  \"\nKey5:\n\tValue5\n\tValue 5 still\n", sw.ToString());
-				Assert.Equal(WriteStreamState.End, scw.State);
-			}
+			string expected = "Key1: Value1\nKey2: \"\"\"Value2\"\"\"\nKey3: \"'Value3'\"\nKey4: \"  Value4  \"\nKey5:\n\tValue5\n\tValue 5 still\n";
+			string actual = sw.ToString();
+			Assert.Equal(expected, actual);
+			Assert.Equal(WriteStreamState.End, scw.State);
 		}
 		[Fact]
 		public static void SectionKeyValueWithSpaces()
@@ -184,7 +139,7 @@
 		public static void NestedSectionKeyValue()
 		{
 			using StringWriter sw = new();
-			using (CfgStreamWriter scw = new(sw, newLine: NewLine.Lf))
+			using (CfgStreamWriter scw = new(sw, newLine: NewLine.Cr))
 			{
 				WriteSectionToken st1 = scw.WriteKeyOpenSection(CfgKey.Create("Section1"));
 				WriteSectionToken st2 = scw.WriteKeyOpenSection(CfgKey.Create("Section 2"));
@@ -197,7 +152,7 @@
 				st2.Close();
 				st1.Close();
 			}
-			Assert.Equal("Section1 {\n\tSection 2 {\n\t\tSection 3 {\n\t\t\tKey1: Value1\n\t\t\tKey2: Value2\n\t\t\tKey3: Value3\n\t\t}\n\t}\n}\n", sw.ToString());
+			Assert.Equal("Section1 {\r\tSection 2 {\r\t\tSection 3 {\r\t\t\tKey1: Value1\r\t\t\tKey2: Value2\r\t\t\tKey3: Value3\r\t\t}\r\t}\r}\r", sw.ToString());
 		}
 		[Fact]
 		public static void KeyValueList()

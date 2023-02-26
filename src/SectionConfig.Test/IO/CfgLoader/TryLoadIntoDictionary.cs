@@ -12,7 +12,7 @@
 		public static void WorksFine()
 		{
 			using CfgStreamReader scr = new(new StringReader("Key:Value\nSection1{Key:Value\nSection2{\nSection3{\nKey:Value\n}\n}\n}"));
-			IReadOnlyDictionary<string, string> dict = new DictionaryCfgLoader(StringComparer.Ordinal).TryLoad(scr).ValueOrException();
+			IReadOnlyDictionary<string, Strings> dict = new DictionaryCfgLoader(StringComparer.Ordinal).TryLoad(scr).ValueOrException();
 			Assert.Equal("Value", Assert.Contains("Key", dict));
 			Assert.Equal("Value", Assert.Contains("Section1:Key", dict));
 			Assert.Equal("Value", Assert.Contains("Section1:Section2:Section3:Key", dict));
@@ -21,14 +21,10 @@
 		public static void ListWorksFine()
 		{
 			using CfgStreamReader scr = new(new StringReader("Section{Key:Value\nlist1:{\n\ta\n\tb\n\tc\n}\nlist2:{\n\ta\n\tb\n\tc\n}}"));
-			IReadOnlyDictionary<string, string> dict = new DictionaryCfgLoader(StringComparer.Ordinal).TryLoad(scr).ValueOrException();
+			IReadOnlyDictionary<string, Strings> dict = new DictionaryCfgLoader(StringComparer.Ordinal).TryLoad(scr).ValueOrException();
 			Assert.Equal("Value", Assert.Contains("Section:Key", dict));
-			Assert.Equal("a", Assert.Contains("Section:list1:0", dict));
-			Assert.Equal("b", Assert.Contains("Section:list1:1", dict));
-			Assert.Equal("c", Assert.Contains("Section:list1:2", dict));
-			Assert.Equal("a", Assert.Contains("Section:list2:0", dict));
-			Assert.Equal("b", Assert.Contains("Section:list2:1", dict));
-			Assert.Equal("c", Assert.Contains("Section:list2:2", dict));
+			Assert.Equal(new Strings("a", "b", "c"), Assert.Contains("Section:list1", dict));
+			Assert.Equal(new Strings("a", "b", "c"), Assert.Contains("Section:list2", dict));
 		}
 		[Fact]
 		public static void DuplicateKey()

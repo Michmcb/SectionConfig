@@ -11,6 +11,7 @@
 	public sealed class CfgStreamWriter : IDisposable
 	{
 		private static readonly char[] crlf = new char[] { '\r', '\n' };
+		private static readonly char[] cr = new char[] { '\r' };
 		private static readonly char[] lf = new char[] { '\n' };
 		private static readonly char[] tab = new char[] { '\t' };
 		private readonly Stack<int> tokenIds;
@@ -49,6 +50,7 @@
 			{
 				IO.NewLine.Lf => lf,
 				IO.NewLine.CrLf => crlf,
+				IO.NewLine.Cr => cr,
 				_ => Environment.NewLine.AsMemory(),
 			};
 			Quoting = quoting;

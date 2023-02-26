@@ -252,5 +252,12 @@
 			// To keep behaviour consistent with CfgRoot (which cannot return itself because it does not implement ICfgObject), we return null on an empty IEnumerable.
 			return result == this ? null : result;
 		}
+		/// <summary>
+		/// Calls <paramref name="section"/>.
+		/// </summary>
+		public void MatchType(Action<CfgValue> value, Action<CfgValueList> list, Action<CfgSection> section)
+		{
+			section(this);
+		}
 	}
 }

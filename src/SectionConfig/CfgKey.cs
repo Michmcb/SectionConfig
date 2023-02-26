@@ -42,6 +42,22 @@
 				: null;
 		}
 		/// <summary>
+		/// Checks <paramref name="key"/> for validity, and returns a new <see cref="CfgKey"/>.
+		/// Keys cannot be empty, cannot be only whitespace, or contain syntax characters. Quotes are fine.
+		/// </summary>
+		/// <param name="key">The value to validate.</param>
+		/// <returns>A key, if <paramref name="key"/> is valid. If <paramref name="key"/> is not valid, null.</returns>
+		public static CfgKey? TryCreate(ReadOnlySpan<char> key)
+		{
+			return (!key.IsEmpty && !key.IsWhiteSpace() && key.IndexOfAny(forbiddenKeyChars) == -1)
+#if NETSTANDARD2_0
+				? new(key.ToString())
+#else
+				? new(new string(key))
+#endif
+				: null;
+		}
+		/// <summary>
 		/// Compares <see cref="KeyString"/> for both this and the other instance for equality.
 		/// </summary>
 		/// <param name="obj">The other <see cref="KeyString"/> to compare.</param>

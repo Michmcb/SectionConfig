@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Runtime.CompilerServices;
 
 	/// <summary>
@@ -25,11 +26,36 @@
 		/// Cretes a new instance representing <see cref="string"/>[]
 		/// </summary>
 		/// <param name="s">The array of strings.</param>
-		public Strings(string[] s)
+		public Strings(params string[] s)
 		{
 			array = true;
 			val = s;
 		}
+#if NET5_0_OR_GREATER
+		/// <summary>
+		/// Creates a new instance from <paramref name="strs"/>. If <see cref="Enumerable.TryGetNonEnumeratedCount{TSource}(IEnumerable{TSource}, out int)"/> works, creates an array with that.
+		/// Otherwise just uses <see cref="Enumerable.ToArray{TSource}(IEnumerable{TSource})"/>.
+		/// </summary>
+		/// <param name="strs"></param>
+		public Strings(IEnumerable<string> strs)
+		{
+			array = true;
+			if (strs.TryGetNonEnumeratedCount(out int c))
+			{
+				string[] a = new string[c];
+				int i = 0;
+				foreach (var s in strs)
+				{
+					a[i++] = s;
+				}
+				val = a;
+			}
+			else
+			{
+				val = strs.ToArray();
+			}
+		}
+#endif
 		/// <summary>
 		/// Indexes into the array. If this is a single string, only 0 is a valid index.
 		/// </summary>
@@ -98,6 +124,14 @@
 				return Unsafe.As<string>(val);
 			}
 		}
+		/// <summary>
+		/// Equivalent to creating a new instance and passing <paramref name="s"/>.
+		/// </summary>
+		public static implicit operator Strings(string s) => new(s);
+		/// <summary>
+		/// Equivalent to creating a new instance and passing <paramref name="s"/>.
+		/// </summary>
+		public static implicit operator Strings(string[] s) => new(s);
 		/// <summary>
 		/// Returns an enumerator that iterates over all strings in the array if this is an array, or just returns a single string if this is a single string.
 		/// </summary>

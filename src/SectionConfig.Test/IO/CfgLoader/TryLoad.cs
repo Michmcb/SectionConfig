@@ -4,6 +4,7 @@
 	using System;
 	using System.IO;
 	using System.Text;
+	using System.Threading.Tasks;
 	using Xunit;
 	public static class TryLoad
 	{
@@ -19,25 +20,12 @@
 				});
 			});
 		}
+		
 		[Fact]
 		public static void WorksFine()
 		{
 			using CfgStreamReader scr = new(new StringReader("Section{Key:Value\n}"));
 			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = new CfgRootCfgLoader().TryLoad(scr);
-			Assert.NotNull(result.Value);
-
-			Assert.Equal(LoadError.Ok, result.Error.Code);
-			// null should default to ordinal
-			Assert.Equal(StringComparer.Ordinal, result.Value!.KeyComparer);
-
-			Check(result.Value!);
-		}
-		[Fact]
-		[Obsolete("Testing obsolete stuff")]
-		public static void WorksFineObsolete()
-		{
-			using SectionCfgReader scr = new(new StringReader("Section{Key:Value\n}"));
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(scr);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -59,11 +47,11 @@
 			Check(result.Value!);
 		}
 		[Fact]
-		[Obsolete("Testing obsolete stuff")]
-		public static void WorksFineFileObsolete()
+		public static async Task WorksFineFileAsync()
 		{
-			File.WriteAllText("WorksFineFileObsolete.scfg", "Section{Key:Value\n}", Encoding.UTF8);
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad("WorksFineFileObsolete.scfg", Encoding.UTF8, keyComparer: null);
+			CfgRootCfgLoader loader = new();
+			File.WriteAllText("WorksFineFileAsync.scfg", "Section{Key:Value\n}", Encoding.UTF8);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = await CfgLoader.TryLoadAsync("WorksFineFileAsync.scfg", Encoding.UTF8, loader);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -83,11 +71,11 @@
 			Check(result.Value!);
 		}
 		[Fact]
-		[Obsolete("Testing obsolete stuff")]
-		public static void WorksFineTextReaderObsolete()
+		public static async Task WorksFineTextReaderAsync()
 		{
+			CfgRootCfgLoader loader = new();
 			using TextReader tr = new StringReader("Section{Key:Value\n}");
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = await CfgLoader.TryLoadAsync(tr, loader);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);
@@ -98,7 +86,7 @@
 		public static void WorksFineStreamReader()
 		{
 			CfgRootCfgLoader loader = new();
-			using StreamReader tr = new (new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
+			using StreamReader tr = new(new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
 			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr, loader);
 			Assert.NotNull(result.Value);
 
@@ -107,11 +95,11 @@
 			Check(result.Value!);
 		}
 		[Fact]
-		[Obsolete("Testing obsolete stuff")]
-		public static void WorksFineStreamReaderObsolete()
+		public static async Task WorksFineStreamReaderAsync()
 		{
+			CfgRootCfgLoader loader = new();
 			using StreamReader tr = new(new MemoryStream(Encoding.UTF8.GetBytes("Section{Key:Value\n}")), Encoding.UTF8);
-			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = CfgLoader.TryLoad(tr);
+			ValOrErr<CfgRoot, ErrMsg<LoadError>> result = await CfgLoader.TryLoadAsync(tr, loader);
 			Assert.NotNull(result.Value);
 
 			Assert.Equal(LoadError.Ok, result.Error.Code);

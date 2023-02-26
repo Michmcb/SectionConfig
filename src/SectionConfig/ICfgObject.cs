@@ -66,5 +66,9 @@
 		/// Otherwise returns false.
 		/// </summary>
 		bool IsValueList([NotNullWhen(true)] out CfgValueList? list);
+		/// <summary>
+		/// Invokes one of the three provided actions, depending upon what type this is.
+		/// </summary>
+		void MatchType(Action<CfgValue> value, Action<CfgValueList> list, Action<CfgSection> section);
 	}
 }

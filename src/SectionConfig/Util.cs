@@ -32,7 +32,9 @@
 					callback(str, from, 0);
 					break;
 				}
+#pragma warning disable IDE0057 // Use range operator
 				int index = str.Slice(from).IndexOf(separator);
+#pragma warning restore IDE0057 // Use range operator
 				if (index != -1)
 				{
 					// Index 0 is the start of the string

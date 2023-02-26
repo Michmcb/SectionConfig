@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Threading.Tasks;
 
-	// TODO make async variations of Cfg loading...but to do that we need to basically clone every single method on SectionCfgReader and SectionCfgWriter
 	/* TODO Having a way to handle comments would be neat. Read below for more.
 	 * 
 	 * Perhaps the best way is to make CfgRootCfgLoader have a handler for comments?
@@ -32,15 +32,16 @@
 		/// <inheritdoc/>
 		public ValOrErr<CfgRoot, ErrMsg<LoadError>> TryLoad(CfgStreamReader reader)
 		{
-			CfgRootCfgLoaderResultHandler handler = new(new CfgRoot(KeyComparer));
-			while (true)
-			{
-				ReadResult rr = reader.Read();
-				if (handler.Handle(rr))
-				{
-					return handler.Result;
-				}
-			}
+			CfgRootCfgLoaderReadResultHandler h = new(new CfgRoot(KeyComparer));
+			while (h.Handle(reader.Read())) ;
+			return h.Result;
+		}
+		/// <inheritdoc/>
+		public async Task<ValOrErr<CfgRoot, ErrMsg<LoadError>>> TryLoadAsync(CfgStreamReader reader)
+		{
+			CfgRootCfgLoaderReadResultHandler h = new(new CfgRoot(KeyComparer));
+			while (h.Handle(await reader.ReadAsync())) ;
+			return h.Result;
 		}
 	}
 }

@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections;
+	using System.Linq;
 	using Xunit;
 	using static SectionConfig.Strings;
 
@@ -22,7 +23,7 @@
 		[Fact]
 		public static void OneString()
 		{
-			Strings strs = new("Single");
+			Strings strs = "Single";
 			Assert.Equal(1, strs.Count);
 			Assert.Single(strs);
 			Assert.Equal("Single", strs.ToString());
@@ -61,7 +62,7 @@
 		[Fact]
 		public static void ArrayLengthOne()
 		{
-			Strings strs = new(new string[] { "Single" });
+			Strings strs = new string[] { "Single" };
 			Assert.Equal(1, strs.Count);
 			Assert.Single(strs);
 			Assert.Equal("Single", strs.ToString());
@@ -72,7 +73,41 @@
 		[Fact]
 		public static void ArrayLengthThree()
 		{
-			Strings strs = new(new string[] { "One", "Two", "Three" });
+			Strings strs = new("One", "Two", "Three");
+			Assert.Equal(3, strs.Count);
+			Assert.Equal("One", strs.ToString());
+			Assert.Equal("One,Two,Three", strs.ToString(','));
+			Assert.Equal("One and Two and Three", strs.ToString(" and "));
+			Assert.Equal("One", strs[0]);
+			Assert.Equal("Two", strs[1]);
+			Assert.Equal("Three", strs[2]);
+			Assert.Throws<IndexOutOfRangeException>(() => strs[3]);
+			Assert.Collection(strs,
+				x => Assert.Equal("One", x),
+				x => Assert.Equal("Two", x),
+				x => Assert.Equal("Three", x));
+		}
+		[Fact]
+		public static void EnumerableWithCount()
+		{
+			Strings strs = new(new string[] { "One", "Two", "Three" }.AsEnumerable());
+			Assert.Equal(3, strs.Count);
+			Assert.Equal("One", strs.ToString());
+			Assert.Equal("One,Two,Three", strs.ToString(','));
+			Assert.Equal("One and Two and Three", strs.ToString(" and "));
+			Assert.Equal("One", strs[0]);
+			Assert.Equal("Two", strs[1]);
+			Assert.Equal("Three", strs[2]);
+			Assert.Throws<IndexOutOfRangeException>(() => strs[3]);
+			Assert.Collection(strs,
+				x => Assert.Equal("One", x),
+				x => Assert.Equal("Two", x),
+				x => Assert.Equal("Three", x));
+		}
+		[Fact]
+		public static void EnumerableWithoutCount()
+		{
+			Strings strs = new(new string[] { "One", "Two", "Three" }.Where(x => true).AsEnumerable());
 			Assert.Equal(3, strs.Count);
 			Assert.Equal("One", strs.ToString());
 			Assert.Equal("One,Two,Three", strs.ToString(','));

@@ -1,7 +1,7 @@
 ﻿namespace SectionConfig.IO
 {
 	/// <summary>
-	/// The state of a <see cref="CfgStreamReader"/>.
+	/// The state of a <see cref="CfgBufferReader"/>.
 	/// </summary>
 	public enum ReadStreamState
 	{
@@ -9,6 +9,14 @@
 		/// The default state. Ready to read a Key/Value, Key/Section, Key/List, or Comment.
 		/// </summary>
 		Section,
+		/// <summary>
+		/// Just read a key. The next item read will be a Value, Section, or List.
+		/// </summary>
+		Key,
+		/// <summary>
+		/// Reading a multiline value.
+		/// </summary>
+		Multiline,
 		/// <summary>
 		/// Reading a list.
 		/// </summary>

@@ -1,14 +1,19 @@
 namespace SectionConfig.Test.IO
 {
 	using SectionConfig.IO;
-	using System;
-	using System.Collections.Generic;
-	using System.IO;
+	using System.Threading.Tasks;
 	using Xunit;
 	public static class ParsingGood
 	{
+		private static readonly CfgKey key = CfgKey.Create("Key");
+		private static readonly CfgKey key1 = CfgKey.Create("Key1");
+		private static readonly CfgKey key2 = CfgKey.Create("Key2");
+		private static readonly CfgKey key3 = CfgKey.Create("Key3");
+		private static readonly CfgKey key4 = CfgKey.Create("Key4");
+		private static readonly CfgKey key5 = CfgKey.Create("Key5");
+		private static readonly CfgKey key6 = CfgKey.Create("Key6");
 		[Fact]
-		public static void GeneralExmaple()
+		public static async Task GeneralExample()
 		{
 			string s = "\n" +
 "Key 1:     Blah    \n" +
@@ -27,8 +32,8 @@ namespace SectionConfig.Test.IO
 "		a multiline value.\n" +
 "Section{\n" +
 "	Key:\n" +
-"		'Also a multiline string\n" +
-"		It just keeps going too'\n" +
+"\t\t'A quoted string\n" +
+"\t\tIt just keeps going too'\n" +
 "\n" +
 "}\n" +
 "List:{\n" +
@@ -63,120 +68,103 @@ namespace SectionConfig.Test.IO
 				: String
 			 */
 
-			CfgKey s1 = CfgKey.Create("Section");
-			CfgKey l1 = CfgKey.Create("List");
-			var readResults = new ReadResult[]
+			CfgKey sectionKey = CfgKey.Create("Section");
+			CfgKey listKey = CfgKey.Create("List");
+			CfgKey key_1 = CfgKey.Create("Key 1");
+			CfgKey key_2 = CfgKey.Create("Key 2");
+			CfgKey key_4 = CfgKey.Create("Key 4");
+			CfgKey key_5 = CfgKey.Create("Key 5");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Blah"),
-				new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Blah"),
-				new(SectionCfgToken.Comment, default, " Some comment   "),
-				new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Blah"),
-				new(SectionCfgToken.Value, CfgKey.Create("Key 4"), "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone"),
-				new(SectionCfgToken.Value, CfgKey.Create("Key 5"), "Aligned, still\na multiline value."),
-				new(SectionCfgToken.StartSection, s1),
-				new(SectionCfgToken.Value, CfgKey.Create("Key"), "Also a multiline string\n\t\tIt just keeps going too"),
-				new(SectionCfgToken.EndSection, s1),
-				new(SectionCfgToken.StartList, l1),
-				new(SectionCfgToken.ListValue, l1, "String 1"),
-				new(SectionCfgToken.ListValue, l1, "String 2"),
-				new(SectionCfgToken.Comment, default, " A comment"),
-				new(SectionCfgToken.ListValue, l1, "String 3"),
-				new(SectionCfgToken.ListValue, l1, "String\n\t4"),
-				new(SectionCfgToken.ListValue, l1, "String\n\t5"),
-				new(SectionCfgToken.EndList, l1),
+				new(CfgBufToken.Key, key_1),
+				new(CfgBufToken.Value, key_1, "Blah"),
+				new(CfgBufToken.Key, key_2),
+				new(CfgBufToken.Value, key_2, "Blah"),
+				new(CfgBufToken.Comment, key_2, " Some comment   "),
+				new(CfgBufToken.Key, key3),
+				new(CfgBufToken.Value, key3, "Blah"),
+				new(CfgBufToken.Key, key_4),
+				new(CfgBufToken.StartMultiline, key_4),
+				new(CfgBufToken.Value, key_4, "This is a multiline value"),
+				new(CfgBufToken.Value, key_4, "It will just keep going", "\n"),
+				new(CfgBufToken.Value, key_4, "Until we find lesser indentation", "\n"),
+				new(CfgBufToken.Value, key_4, "\tThis is still part of the string", "\n"),
+				new(CfgBufToken.Value, key_4, "Done", "\n"),
+				new(CfgBufToken.EndMultiline, key_4, "", "\n"),
+				new(CfgBufToken.Key, key_5),
+				new(CfgBufToken.StartMultiline, key_5),
+				new(CfgBufToken.Value, key_5, "Aligned, still"),
+				new(CfgBufToken.Value, key_5, "a multiline value.", "\n"),
+				new(CfgBufToken.EndMultiline, key_5, "", "\n"),
+				new(CfgBufToken.Key, sectionKey),
+				new(CfgBufToken.StartSection, sectionKey),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "A quoted string\n\t\tIt just keeps going too"),
+				new(CfgBufToken.EndSection, sectionKey),
+				new(CfgBufToken.Key, listKey),
+				new(CfgBufToken.StartList, listKey),
+				new(CfgBufToken.Value, listKey, "String 1"),
+				new(CfgBufToken.Value, listKey, "String 2"),
+				new(CfgBufToken.Comment, listKey, " A comment"),
+				new(CfgBufToken.Value, listKey, "String 3"),
+				new(CfgBufToken.Value, listKey, "String\n\t4"),
+				new(CfgBufToken.Value, listKey, "String\n\t5"),
+				new(CfgBufToken.EndList, listKey),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.Value, key_1, "Blah"),
+				new(SectionCfgToken.Value, key_2, "Blah"),
+				new(SectionCfgToken.Comment, key_2, " Some comment   "),
+				new(SectionCfgToken.Value, key3, "Blah"),
+				new(SectionCfgToken.Value, key_4, "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n\tThis is still part of the string\nDone"),
+				new(SectionCfgToken.Value, key_5, "Aligned, still\na multiline value."),
+				new(SectionCfgToken.StartSection, sectionKey),
+				new(SectionCfgToken.Value, key, "A quoted string\n\t\tIt just keeps going too"),
+				new(SectionCfgToken.EndSection, sectionKey),
+				new(SectionCfgToken.StartList, listKey),
+				new(SectionCfgToken.ListValue, listKey, "String 1"),
+				new(SectionCfgToken.ListValue, listKey, "String 2"),
+				new(SectionCfgToken.Comment, listKey, " A comment"),
+				new(SectionCfgToken.ListValue, listKey, "String 3"),
+				new(SectionCfgToken.ListValue, listKey, "String\n\t4"),
+				new(SectionCfgToken.ListValue, listKey, "String\n\t5"),
+				new(SectionCfgToken.EndList, listKey),
 				new(SectionCfgToken.End),
-			};
-			using (CfgStreamReader scr = new(new StringReader(s)))
-			{
-				Helper.AssertReadMatches(scr, readResults);
-			}
-#pragma warning disable CS0618 // Type or member is obsolete
-			using (SectionCfgReader scr = new(new StringReader(s)))
-			{
-				Helper.AssertReadMatches(scr, readResults);
-			}
-#pragma warning restore CS0618 // Type or member is obsolete
-			using (CfgStreamReader scr = new(new StringReader(s)))
-			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Assert.Equal(7, root.Elements.Count);
-				Helper.AssertKeyValues(root,
-						new("Key 1", "Blah"),
-						new("Key 2", "Blah"),
-						new("Key3", "Blah"),
-						new("Key 4", "This is a multiline value\nIt will just keep going\nUntil we find lesser indentation\n	This is still part of the string\nDone")
-					);
-				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
-				Helper.AssertKeyValues(section,
-						new KeyValuePair<string, string>("Key", "Also a multiline string\n\t\tIt just keeps going too")
-					);
-				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
-				Assert.Collection(list.Values,
-					x => Assert.Equal("String 1", x),
-					x => Assert.Equal("String 2", x),
-					x => Assert.Equal("String 3", x),
-					x => Assert.Equal("String\n\t4", x),
-					x => Assert.Equal("String\n\t5", x));
-			}
+			});
 		}
 		[Fact]
-		public static void ObsoleteReader()
-		{
-#pragma warning disable CS0618 // Type or member is obsolete
-			using SectionCfgReader scr = new(new StringReader("Key:Value"));
-#pragma warning restore CS0618 // Type or member is obsolete
-			var csr = scr.CfgStreamReader;
-			Assert.Equal(csr, scr.CfgStreamReader);
-			Assert.Equal(csr.Reader, scr.Reader);
-			Assert.True(scr.CloseInput);
-			Assert.False(csr.LeaveOpen);
-			Assert.Equal(csr.State, scr.State);
-			Assert.Equal(csr.SectionLevel, scr.SectionLevel);
-
-			scr.CloseInput = true;
-			Assert.False(csr.LeaveOpen);
-			scr.CloseInput = false;
-			Assert.True(csr.LeaveOpen);
-		}
-		[Fact]
-		public static void Empty()
+		public static async Task Empty()
 		{
 			string s = "";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new BufReadResult(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Assert.Empty(root.Elements.Values);
-			}
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyValue()
+		public static async Task EmptyValue()
 		{
 			string s = "Key:";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "")
-				);
-			}
+				new(SectionCfgToken.Value, key),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyMultilineValue()
+		public static async Task EmptyValues()
 		{
 			foreach (string s in new string[] {
 				"Key:\n",
@@ -184,804 +172,738 @@ namespace SectionConfig.Test.IO
 				"Key:\n\t\n",
 			})
 			{
-				using (CfgStreamReader scr = new(new StringReader(s)))
+				Helper.TestCfgBufferReader(s, new BufReadResult[]
 				{
-					Helper.AssertReadMatches(scr, new ReadResult[]
-					{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
-					new(SectionCfgToken.End),
-					});
-				}
-				using (CfgStreamReader scr = new(new StringReader(s)))
-				{
-					CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-					Helper.AssertKeyValues(root,
-						new KeyValuePair<string, string>("Key", "")
-					);
-				}
+					new(CfgBufToken.Key, key),
+					new(CfgBufToken.Value, key),
+					new(CfgBufToken.End),
+				});
+				await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.Value, key),
+				new(SectionCfgToken.End),
+			});
 			}
 		}
 		[Fact]
-		public static void EmptyValueAndMultilineValue()
+		public static async Task EmptyValueAndMultilineValue()
 		{
 			string s = "Key1:\nKey2:\n\tvalue\n\n\tKey3:\n\tKey4:\n\t\tvalue\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "value"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key4"), "value"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.StartMultiline, key2),
+				new(CfgBufToken.Value, key2, "value"),
+				new(CfgBufToken.EndMultiline, key2, "", "\n"),
+				new(CfgBufToken.Key, key3),
+				new(CfgBufToken.Value, key3),
+				new(CfgBufToken.Key, key4),
+				new(CfgBufToken.StartMultiline, key4),
+				new(CfgBufToken.Value, key4, "value"),
+				new(CfgBufToken.EndMultiline, key4, "", "\n"),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", ""),
-					new KeyValuePair<string, string>("Key2", "value"),
-					new KeyValuePair<string, string>("Key3", ""),
-					new KeyValuePair<string, string>("Key4", "value")
-				);
-			}
+				new(SectionCfgToken.Value, key1),
+				new(SectionCfgToken.Value, key2, "value"),
+				new(SectionCfgToken.Value, key3),
+				new(SectionCfgToken.Value, key4, "value"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void ManyEmptyKeys()
+		public static async Task ManyEmptyKeys()
 		{
 			string s = "\tKey1:\n\tKey2:\n\tKey3:\nKey4:\nKey5:\nKey6:\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key4"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key5"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key6"), ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.Value, key2),
+				new(CfgBufToken.Key, key3),
+				new(CfgBufToken.Value, key3),
+				new(CfgBufToken.Key, key4),
+				new(CfgBufToken.Value, key4),
+				new(CfgBufToken.Key, key5),
+				new(CfgBufToken.Value, key5),
+				new(CfgBufToken.Key, key6),
+				new(CfgBufToken.Value, key6),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", ""),
-					new KeyValuePair<string, string>("Key2", ""),
-					new KeyValuePair<string, string>("Key3", ""),
-					new KeyValuePair<string, string>("Key4", ""),
-					new KeyValuePair<string, string>("Key5", ""),
-					new KeyValuePair<string, string>("Key6", "")
-				);
-			}
+				new(SectionCfgToken.Value, key1),
+				new(SectionCfgToken.Value, key2),
+				new(SectionCfgToken.Value, key3),
+				new(SectionCfgToken.Value, key4),
+				new(SectionCfgToken.Value, key5),
+				new(SectionCfgToken.Value, key6),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineNotTreatedAsKey()
+		public static async Task MultilineNotTreatedAsKey()
 		{
 			string s = "Key1:\n\tNotAKey:\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "NotAKey:"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.StartMultiline, key1),
+				new(CfgBufToken.Value, key1, "NotAKey:"),
+				new(CfgBufToken.EndMultiline, key1, "", "\n"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", "NotAKey:")
-				);
-			}
+				new(SectionCfgToken.Value, key1, "NotAKey:"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyValueDecreasingIndentation()
+		public static async Task EmptyValueDecreasingIndentation()
 		{
 			string s = "\t\t\tKey1:\n\t\tKey2:\n\tKey3:\nKey4:\nKey5:\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key3"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key4"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key5"), ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.Value, key2),
+				new(CfgBufToken.Key, key3),
+				new(CfgBufToken.Value, key3),
+				new(CfgBufToken.Key, key4),
+				new(CfgBufToken.Value, key4),
+				new(CfgBufToken.Key, key5),
+				new(CfgBufToken.Value, key5),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", ""),
-					new KeyValuePair<string, string>("Key2", ""),
-					new KeyValuePair<string, string>("Key3", ""),
-					new KeyValuePair<string, string>("Key4", ""),
-					new KeyValuePair<string, string>("Key5", "")
-				);
-			}
+				new(SectionCfgToken.Value, key1),
+				new(SectionCfgToken.Value, key2),
+				new(SectionCfgToken.Value, key3),
+				new(SectionCfgToken.Value, key4),
+				new(SectionCfgToken.Value, key5),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void IncreasingIndentationMultiline()
+		public static async Task IncreasingIndentationMultiline()
 		{
 			string s = "Key:\n\tThis value:\n\tis not a key!";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value:\nis not a key!"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value:"),
+				new(CfgBufToken.Value, key, "is not a key!", "\n"),
+				new(CfgBufToken.EndMultiline, key),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value:\nis not a key!")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value:\nis not a key!"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyValueIncreasingIndentationThenMultiline()
+		public static async Task EmptyValueIncreasingIndentationThenMultiline()
 		{
 			string s = "Key1:\nKey2:\n\tThis value:\n\tis not a key!";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), ""),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "This value:\nis not a key!"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.StartMultiline, key2),
+				new(CfgBufToken.Value, key2, "This value:"),
+				new(CfgBufToken.Value, key2, "is not a key!", "\n"),
+				new(CfgBufToken.EndMultiline, key2),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", ""),
-					new KeyValuePair<string, string>("Key2", "This value:\nis not a key!")
-				);
-			}
+				new(SectionCfgToken.Value, key1),
+				new(SectionCfgToken.Value, key2, "This value:\nis not a key!"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyValueSingleQuoted()
+		public static async Task EmptyValueSingleQuoted()
 		{
 			string s = "Key:''";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "")
-				);
-			}
+				new(SectionCfgToken.Value, key),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyValueDoubleQuoted()
+		public static async Task EmptyValueDoubleQuoted()
 		{
 			string s = "\nKey:\"\"";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "")
-				);
-			}
+				new(SectionCfgToken.Value, key),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyQuotedValueThenKeyUnquoted()
+		public static async Task KeyQuotedValueThenKeyUnquoted()
 		{
 			string s = "Key1:'Value1'\nKey2:Value2";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "Value1"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "Value2"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1, "Value1"),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.Value, key2, "Value2"),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key1", "Value1"),
-					new KeyValuePair<string, string>("Key2", "Value2")
-				);
-			}
+				new(SectionCfgToken.Value, key1, "Value1"),
+				new(SectionCfgToken.Value, key2, "Value2"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EmptyComment()
+		public static async Task EmptyComment()
 		{
 			string s = "#";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Comment, default, ""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Comment, default, ""),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Assert.Empty(root.Elements.Values);
-			}
+				new(SectionCfgToken.Comment),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EscapedDoubleQuote()
+		public static async Task EscapedDoubleQuote()
 		{
 			string s = "Key:\"\"\"\"";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "\""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "\""),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "\"")
-				);
-			}
+				new(SectionCfgToken.Value, key, "\""),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void EscapedSingleQuote()
+		public static async Task EscapedSingleQuote()
 		{
 			string s = "Key:''''";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "'"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "'"),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "'")
-				);
-			}
+				new(SectionCfgToken.Value, key, "'"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValue()
+		public static async Task KeyValue()
 		{
 			string s = "Key:Value";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "Value"),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "Value")
-				);
-			}
+				new(SectionCfgToken.Value, key, "Value"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValueComment()
+		public static async Task KeyValueComment()
 		{
 			string s = "Key:'Value' #Explanation";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
-					new(SectionCfgToken.Comment, default, "Explanation"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "Value"),
+				new(CfgBufToken.Comment, key, "Explanation"),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "Value")
-				);
-			}
+				new(SectionCfgToken.Value, key, "Value"),
+				new(SectionCfgToken.Comment, key, "Explanation"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValueStartingWithNumberSign()
+		public static async Task KeyValueStartingWithNumberSign()
 		{
 			string s = "Key:#This is a very important string!";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "#This is a very important string!"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "#This is a very important string!"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "#This is a very important string!")
-				);
-			}
+				new(SectionCfgToken.Value, key, "#This is a very important string!"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValueNoWhitespace()
+		public static async Task KeyValueNoWhitespace()
 		{
-			string s = "   Key		: Value	";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			string s = "   Key\t\t: Value\t";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "Value"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "Value")
-				);
-			}
+				new(SectionCfgToken.Value, key, "Value"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValueDoubleQuoted()
+		public static async Task KeyValueDoubleQuoted()
 		{
 			string s = "Key:\"'Value's all good!'\"";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "'Value's all good!'"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "'Value's all good!'"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "'Value's all good!'")
-				);
-			}
+				new(SectionCfgToken.Value, key, "'Value's all good!'"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void KeyValueSingleQuoted()
+		public static async Task KeyValueSingleQuoted()
 		{
 			string s = "Key:'\"Value \"is\" all good!\"'";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "\"Value \"is\" all good!\""),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "\"Value \"is\" all good!\""),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "\"Value \"is\" all good!\"")
-				);
-			}
+				new(SectionCfgToken.Value, key, "\"Value \"is\" all good!\""),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void ManyKeyValues()
+		public static async Task ManyKeyValues()
 		{
-			string s = "Key 1:\tValue1\nKey 2:\t'Value 2'\n Key 3 : Value 3\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			var key_1 = CfgKey.Create("Key 1");
+			var key_2 = CfgKey.Create("Key 2");
+			var key_3 = CfgKey.Create("Key 3");
+
+			string s = "Key 1:\tValue1\nKey 2:\t'Value 2'\n Key 3 : Value  3\n";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key 1"), "Value1"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 2"), "Value 2"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key 3"), "Value 3"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key_1),
+				new(CfgBufToken.Value, key_1, "Value1"),
+				new(CfgBufToken.Key, key_2),
+				new(CfgBufToken.Value, key_2, "Value 2"),
+				new(CfgBufToken.Key, key_3),
+				new(CfgBufToken.Value, key_3, "Value  3"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key 1", "Value1"),
-					new KeyValuePair<string, string>("Key 2", "Value 2"),
-					new KeyValuePair<string, string>("Key 3", "Value 3")
-				);
-			}
+				new(SectionCfgToken.Value, key_1, "Value1"),
+				new(SectionCfgToken.Value, key_2, "Value 2"),
+				new(SectionCfgToken.Value, key_3, "Value  3"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueLf()
+		public static async Task MultilineUnquotedValueLf()
 		{
 			string s = "Key:\n\tThis value\n\tspans many lines";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\n"),
+				new(CfgBufToken.EndMultiline, key),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans many lines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\nspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueLfTrailingNewline()
+		public static async Task MultilineUnquotedValueLfTrailingNewline()
 		{
-			// Trailing newlines are removed
 			string s = "Key:\n\tThis value\n\tspans many lines\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\n"),
+				new(CfgBufToken.EndMultiline, key, "",  "\n"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans many lines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\nspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueLfTrailingNewlineAndTab()
+		public static async Task MultilineUnquotedValueLfTrailingNewlineAndTab()
 		{
-			// In a text editor, another line of indentation makes it appear as if the multiline value has a blank last line, hence why we should have a trailing newline
 			string s = "Key:\n\tThis value\n\tspans many lines\n\t";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many lines\n"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\n"),
+				new(CfgBufToken.Value, key, "", "\n"),
+				new(CfgBufToken.EndMultiline, key),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans many lines\n")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\nspans many lines\n"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueCrLf()
+		public static async Task MultilineUnquotedValueCrLf()
 		{
 			string s = "Key:\r\n\tThis value\r\n\tspans many lines";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\nspans many lines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\r\n"),
+				new(CfgBufToken.EndMultiline, key),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\r\nspans many lines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\r\nspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueCrLfTrailingNewline()
+		public static async Task MultilineUnquotedValueCrLfTrailingNewline()
 		{
 			string s = "Key:\r\n\tThis value\r\n\tspans many lines\r\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\nspans many lines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\r\n"),
+				new(CfgBufToken.EndMultiline, key, "", "\r\n"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\r\nspans many lines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\r\nspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
-		/// <summary>
-		/// This treats \r as any old character because we don't support just \r as newlines
-		/// </summary>
 		[Fact]
-		public static void SinglelineUnquotedValueCr()
+		public static async Task MultilineUnquotedValueCr()
 		{
 			string s = "Key:\r\tThis value\r\tspans many lines";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\tspans many lines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\r"),
+				new(CfgBufToken.EndMultiline, key),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\r\tspans many lines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\rspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
-		/// <summary>
-		/// This treats \r as any old character because we don't support just \r as newlines
-		/// </summary>
 		[Fact]
-		public static void SinglelineUnquotedValueCrTrailingCr()
+		public static async Task MultilineUnquotedValueCrTrailingCr()
 		{
 			string s = "Key:\r\tThis value\r\tspans many lines\r";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\r\tspans many lines\r"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans many lines", "\r"),
+				new(CfgBufToken.EndMultiline, key, "", "\r"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\r\tspans many lines\r")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\rspans many lines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineUnquotedValueMixed()
+		public static async Task MultilineUnquotedValueMixed()
 		{
 			string s = "Key:\n\tThis value\n\tspans\r\tmany\r\n\tlines\n";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans\r\tmany\r\nlines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartMultiline, key),
+				new(CfgBufToken.Value, key, "This value"),
+				new(CfgBufToken.Value, key, "spans", "\n"),
+				new(CfgBufToken.Value, key, "many", "\r"),
+				new(CfgBufToken.Value, key, "lines", "\r\n"),
+				new(CfgBufToken.EndMultiline, key, "", "\n"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans\r\tmany\r\nlines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\nspans\rmany\r\nlines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void MultilineQuotedValue()
+		public static async Task MultilineQuotedValue()
 		{
 			string s = "Key:\n\"This value\nspans many\n\tlines\"";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.Value, CfgKey.Create("Key"), "This value\nspans many\n\tlines"),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "This value\nspans many\n\tlines"),
+				new(CfgBufToken.End)
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				Helper.AssertKeyValues(root,
-					new KeyValuePair<string, string>("Key", "This value\nspans many\n\tlines")
-				);
-			}
+				new(SectionCfgToken.Value, key, "This value\nspans many\n\tlines"),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void Section()
+		public static async Task Section()
 		{
 			string s = "Section{}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey k1 = CfgKey.Create("Section");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey k1 = CfgKey.Create("Section");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartSection, k1, string.Empty),
-					new(SectionCfgToken.EndSection, k1, string.Empty),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, k1),
+				new(CfgBufToken.StartSection, k1),
+				new(CfgBufToken.EndSection, k1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
-				Assert.Empty(section.Elements);
-			}
+				new(SectionCfgToken.StartSection, k1),
+				new(SectionCfgToken.EndSection, k1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void NestedSections()
+		public static async Task NestedSections()
 		{
 			string s = "Section1{Section2{Section3{Section4{}}}}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey s1 = CfgKey.Create("Section1");
+			CfgKey s2 = CfgKey.Create("Section2");
+			CfgKey s3 = CfgKey.Create("Section3");
+			CfgKey s4 = CfgKey.Create("Section4");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey s1 = CfgKey.Create("Section1");
-				CfgKey s2 = CfgKey.Create("Section2");
-				CfgKey s3 = CfgKey.Create("Section3");
-				CfgKey s4 = CfgKey.Create("Section4");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartSection, s1, string.Empty),
-					new(SectionCfgToken.StartSection, s2, string.Empty),
-					new(SectionCfgToken.StartSection, s3, string.Empty),
-					new(SectionCfgToken.StartSection, s4, string.Empty),
-					new(SectionCfgToken.EndSection, s4, string.Empty),
-					new(SectionCfgToken.EndSection, s3, string.Empty),
-					new(SectionCfgToken.EndSection, s2, string.Empty),
-					new(SectionCfgToken.EndSection, s1, string.Empty),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, s1),
+				new(CfgBufToken.StartSection, s1),
+				new(CfgBufToken.Key, s2),
+				new(CfgBufToken.StartSection, s2),
+				new(CfgBufToken.Key, s3),
+				new(CfgBufToken.StartSection, s3),
+				new(CfgBufToken.Key, s4),
+				new(CfgBufToken.StartSection, s4),
+				new(CfgBufToken.EndSection, s4),
+				new(CfgBufToken.EndSection, s3),
+				new(CfgBufToken.EndSection, s2),
+				new(CfgBufToken.EndSection, s1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgSection section1 = Assert.IsType<CfgSection>(root.Elements["Section1"]);
-				CfgSection section2 = Assert.IsType<CfgSection>(section1.Elements["Section2"]);
-				CfgSection section3 = Assert.IsType<CfgSection>(section2.Elements["Section3"]);
-				CfgSection section4 = Assert.IsType<CfgSection>(section3.Elements["Section4"]);
-				Assert.Equal(1, section1.Elements.Count);
-				Assert.Equal(1, section2.Elements.Count);
-				Assert.Equal(1, section3.Elements.Count);
-				Assert.Empty(section4.Elements);
-			}
+				new(SectionCfgToken.StartSection, s1),
+				new(SectionCfgToken.StartSection, s2),
+				new(SectionCfgToken.StartSection, s3),
+				new(SectionCfgToken.StartSection, s4),
+				new(SectionCfgToken.EndSection, s4),
+				new(SectionCfgToken.EndSection, s3),
+				new(SectionCfgToken.EndSection, s2),
+				new(SectionCfgToken.EndSection, s1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void SectionValue()
+		public static async Task SectionValue()
 		{
 			string s = "Section{Key1:Value1\nKey2:Value2\nKey3:Value3\n}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey s1 = CfgKey.Create("Section");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey s1 = CfgKey.Create("Section");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartSection, s1, string.Empty),
-					new(SectionCfgToken.Value, CfgKey.Create("Key1"), "Value1"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key2"), "Value2"),
-					new(SectionCfgToken.Value, CfgKey.Create("Key3"), "Value3"),
-					new(SectionCfgToken.EndSection, s1, string.Empty),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, s1),
+				new(CfgBufToken.StartSection, s1),
+				new(CfgBufToken.Key, key1),
+				new(CfgBufToken.Value, key1, "Value1"),
+				new(CfgBufToken.Key, key2),
+				new(CfgBufToken.Value, key2, "Value2"),
+				new(CfgBufToken.Key, key3),
+				new(CfgBufToken.Value, key3, "Value3"),
+				new(CfgBufToken.EndSection, s1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
-				Helper.AssertKeyValues(section,
-					new("Key1", "Value1"),
-					new("Key2", "Value2"),
-					new("Key3", "Value3")
-				);
-			}
+				new(SectionCfgToken.StartSection, s1),
+				new(SectionCfgToken.Value, key1, "Value1"),
+				new(SectionCfgToken.Value, key2, "Value2"),
+				new(SectionCfgToken.Value, key3, "Value3"),
+				new(SectionCfgToken.EndSection, s1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void List()
+		public static async Task List()
 		{
 			string s = "Section{Key :{One\n#Comment\nTwo\n\n'Three\nThree'#CommentAgain\nHeyyyy\n}}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey s1 = CfgKey.Create("Section");
+			CfgKey l1 = key;
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey s1 = CfgKey.Create("Section");
-				CfgKey l1 = CfgKey.Create("Key");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartSection, s1, string.Empty),
-					new(SectionCfgToken.StartList, l1, string.Empty),
-					new(SectionCfgToken.ListValue, l1, "One"),
-					new(SectionCfgToken.Comment, default, "Comment"),
-					new(SectionCfgToken.ListValue, l1, "Two"),
-					new(SectionCfgToken.ListValue, l1, "Three\nThree"),
-					new(SectionCfgToken.Comment, default, "CommentAgain"),
-					new(SectionCfgToken.ListValue, l1, "Heyyyy"),
-					new(SectionCfgToken.EndList, l1, string.Empty),
-					new(SectionCfgToken.EndSection, s1, string.Empty),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, s1),
+				new(CfgBufToken.StartSection, s1),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Value, l1, "One"),
+				new(CfgBufToken.Comment, l1, "Comment"),
+				new(CfgBufToken.Value, l1, "Two"),
+				new(CfgBufToken.Value, l1, "Three\nThree"),
+				new(CfgBufToken.Comment, l1, "CommentAgain"),
+				new(CfgBufToken.Value, l1, "Heyyyy"),
+				new(CfgBufToken.EndList, l1),
+				new(CfgBufToken.EndSection, s1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
-				CfgValueList list = Assert.IsType<CfgValueList>(section.Elements["Key"]);
-				Assert.Collection(list.Values,
-					x => Assert.Equal("One", x),
-					x => Assert.Equal("Two", x),
-					x => Assert.Equal("Three\nThree", x),
-					x => Assert.Equal("Heyyyy", x));
-			}
+				new(SectionCfgToken.StartSection, s1),
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.ListValue, l1, "One"),
+				new(SectionCfgToken.Comment, l1, "Comment"),
+				new(SectionCfgToken.ListValue, l1, "Two"),
+				new(SectionCfgToken.ListValue, l1, "Three\nThree"),
+				new(SectionCfgToken.Comment, l1, "CommentAgain"),
+				new(SectionCfgToken.ListValue, l1, "Heyyyy"),
+				new(SectionCfgToken.EndList, l1),
+				new(SectionCfgToken.EndSection, s1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void QuotedListNoSpaces()
+		public static async Task QuotedListNoSpaces()
 		{
 			string s = "List:{\"One\"'Two'\"Three\"'Four'}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey l1 = CfgKey.Create("List");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey l1 = CfgKey.Create("List");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartList, l1),
-					new(SectionCfgToken.ListValue, l1, "One"),
-					new(SectionCfgToken.ListValue, l1, "Two"),
-					new(SectionCfgToken.ListValue, l1, "Three"),
-					new(SectionCfgToken.ListValue, l1, "Four"),
-					new(SectionCfgToken.EndList, l1, string.Empty),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Value, l1, "One"),
+				new(CfgBufToken.Value, l1, "Two"),
+				new(CfgBufToken.Value, l1, "Three"),
+				new(CfgBufToken.Value, l1, "Four"),
+				new(CfgBufToken.EndList, l1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
-				Assert.Collection(list.Values,
-					x => Assert.Equal("One", x),
-					x => Assert.Equal("Two", x),
-					x => Assert.Equal("Three", x),
-					x => Assert.Equal("Four", x));
-			}
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.ListValue, l1, "One"),
+				new(SectionCfgToken.ListValue, l1, "Two"),
+				new(SectionCfgToken.ListValue, l1, "Three"),
+				new(SectionCfgToken.ListValue, l1, "Four"),
+				new(SectionCfgToken.EndList, l1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void QuotedListSpaces()
+		public static async Task QuotedListSpaces()
 		{
-			string s = "List:{\"One\" \"One\" \"'Two'\" 'Three' '\"Four\"'}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			string s = "List: {\"One\" \"One\" \"'Two'\" 'Three' '\"Four\"'}";
+			CfgKey l1 = CfgKey.Create("List");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey l1 = CfgKey.Create("List");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartList, l1),
-					new(SectionCfgToken.ListValue, l1, "One"),
-					new(SectionCfgToken.ListValue, l1, "One"),
-					new(SectionCfgToken.ListValue, l1, "'Two'"),
-					new(SectionCfgToken.ListValue, l1, "Three"),
-					new(SectionCfgToken.ListValue, l1, "\"Four\""),
-					new(SectionCfgToken.EndList, l1),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Value, l1, "One"),
+				new(CfgBufToken.Value, l1, "One"),
+				new(CfgBufToken.Value, l1, "'Two'"),
+				new(CfgBufToken.Value, l1, "Three"),
+				new(CfgBufToken.Value, l1, "\"Four\""),
+				new(CfgBufToken.EndList, l1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgValueList list = Assert.IsType<CfgValueList>(root.Elements["List"]);
-				Assert.Collection(list.Values,
-					x => Assert.Equal("One", x),
-					x => Assert.Equal("One", x),
-					x => Assert.Equal("'Two'", x),
-					x => Assert.Equal("Three", x),
-					x => Assert.Equal("\"Four\"", x));
-			}
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.ListValue, l1, "One"),
+				new(SectionCfgToken.ListValue, l1, "One"),
+				new(SectionCfgToken.ListValue, l1, "'Two'"),
+				new(SectionCfgToken.ListValue, l1, "Three"),
+				new(SectionCfgToken.ListValue, l1, "\"Four\""),
+				new(SectionCfgToken.EndList, l1),
+				new(SectionCfgToken.End),
+			});
 		}
 		[Fact]
-		public static void ListIndentedMultilineQuotedText()
+		public static async Task ListIndentedMultilineQuotedText()
 		{
 			string s = "Section{\tList:{\n" +
 				"\t\tOne\n" +
@@ -990,34 +912,34 @@ namespace SectionConfig.Test.IO
 				"\t\tThree'\n" +
 				"    \"Four\n" +
 				"    Four\"}}";
-			using (CfgStreamReader scr = new(new StringReader(s)))
+			CfgKey s1 = CfgKey.Create("Section");
+			CfgKey l1 = CfgKey.Create("List");
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				CfgKey s1 = CfgKey.Create("Section");
-				CfgKey l1 = CfgKey.Create("List");
-				Helper.AssertReadMatches(scr, new ReadResult[]
-				{
-					new(SectionCfgToken.StartSection, s1),
-					new(SectionCfgToken.StartList, l1),
-					new(SectionCfgToken.ListValue, l1, "One"),
-					new(SectionCfgToken.ListValue, l1, "Two"),
-					new(SectionCfgToken.ListValue, l1, "Three\n\t\tThree"),
-					new(SectionCfgToken.ListValue, l1, "Four\n    Four"),
-					new(SectionCfgToken.EndList, l1),
-					new(SectionCfgToken.EndSection, s1),
-					new(SectionCfgToken.End),
-				});
-			}
-			using (CfgStreamReader scr = new(new StringReader(s)))
+				new(CfgBufToken.Key, s1),
+				new(CfgBufToken.StartSection, s1),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Value, l1, "One"),
+				new(CfgBufToken.Value, l1, "Two"),
+				new(CfgBufToken.Value, l1, "Three\n\t\tThree"),
+				new(CfgBufToken.Value, l1, "Four\n    Four"),
+				new(CfgBufToken.EndList, l1),
+				new(CfgBufToken.EndSection, s1),
+				new(CfgBufToken.End),
+			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				CfgRoot root = Helper.LoadsProperly(scr, StringComparer.Ordinal);
-				CfgSection section = Assert.IsType<CfgSection>(root.Elements["Section"]);
-				CfgValueList list = Assert.IsType<CfgValueList>(section.Elements["List"]);
-				Assert.Collection(list.Values,
-					x => Assert.Equal("One", x),
-					x => Assert.Equal("Two", x),
-					x => Assert.Equal("Three\n\t\tThree", x),
-					x => Assert.Equal("Four\n    Four", x));
-			}
+				new(SectionCfgToken.StartSection, s1),
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.ListValue, l1, "One"),
+				new(SectionCfgToken.ListValue, l1, "Two"),
+				new(SectionCfgToken.ListValue, l1, "Three\n\t\tThree"),
+				new(SectionCfgToken.ListValue, l1, "Four\n    Four"),
+				new(SectionCfgToken.EndList, l1),
+				new(SectionCfgToken.EndSection, s1),
+				new(SectionCfgToken.End),
+			});
 		}
 	}
 }

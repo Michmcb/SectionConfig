@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-
 	/// <summary>
 	/// Helps with writing a config file in a fluent way.
 	/// </summary>
@@ -21,21 +20,9 @@
 			LeaveOpen = leaveOpen;
 		}
 		/// <summary>
-		/// Creates a new instance.
-		/// </summary>
-		/// <param name="writer">The writer to write to.</param>
-		/// <param name="closeWriter">If true, will dispose of <paramref name="writer"/> when this class is disposed of.</param>
-		[Obsolete("Prefer " + nameof(IO.CfgStreamWriter) + ", which uses leaveOpen instead of closeInput like .NET streams do.")]
-		public FluentSectionCfgWriter(SectionCfgWriter writer, bool closeWriter = true) : this(writer.CfgStreamWriter, !closeWriter) { }
-		/// <summary>
 		/// The writer to write to.
 		/// </summary>
 		public CfgStreamWriter CfgStreamWriter { get; }
-		/// <summary>
-		/// Legacy property which creates a new <see cref="SectionCfgWriter"/> that wraps <see cref="CfgStreamWriter"/>.
-		/// </summary>
-		[Obsolete("Prefer " + nameof(CfgStreamWriter) + "")]
-		public SectionCfgWriter Writer => new(CfgStreamWriter);
 		/// <summary>
 		/// <see langword="true"/> to leave <see cref="CfgStreamWriter"/> open after this <see cref="FluentSectionCfgWriter"/> is disposed. Otherwise, false.
 		/// </summary>
@@ -61,7 +48,7 @@
 		/// Writes a comment.
 		/// </summary>
 		/// <param name="comment">The comment to write.</param>
-		/// <param name="replaceLineBreaks">If true, any linebreaks in the comment are replaced with <see cref="SectionCfgWriter.NewLine"/>.</param>
+		/// <param name="replaceLineBreaks">If true, any linebreaks in the comment are replaced with <see cref="CfgStreamWriter.NewLine"/>.</param>
 		/// <returns>this.</returns>
 		public FluentSectionCfgWriter Comment(ReadOnlySpan<char> comment, bool replaceLineBreaks = true)
 		{
@@ -156,7 +143,7 @@
 			}
 		}
 		/// <summary>
-		/// If <see cref="CloseWriter"/> is true, then calls <see cref="SectionCfgWriter.Dispose"/>. Otherwise, does nothing.
+		/// If <see cref="CloseWriter"/> is true, then calls <see cref="CfgStreamWriter.Dispose"/>. Otherwise, does nothing.
 		/// </summary>
 		public void Dispose()
 		{

@@ -1,138 +1,247 @@
 ﻿namespace SectionConfig.Test.IO
 {
 	using SectionConfig.IO;
-	using System.IO;
+	using System.Threading.Tasks;
 	using Xunit;
 
 	public static class ParsingBad
 	{
+		private static readonly CfgKey key = CfgKey.Create("Key");
 		[Fact]
-		public static void UnclosedSection()
+		public static async Task UnclosedSection()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key{"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "Key{";
+			string errMsg = "Found end of stream when there were still 1 sections to close";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.Error, default, "Found end of stream when there were still 1 sections to close"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.Error, key, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void UnclosedSectionAfterKeyValue()
+		public static async Task UnclosedSectionAfterKeyValue()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key{Key:Value"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "Key{Key:Value";
+			string errMsg = "Found end of stream when there were still 1 sections to close";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.Value, CfgKey.Create("Key"), "Value"),
-				new(SectionCfgToken.Error, default, "Found end of stream when there were still 1 sections to close"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "Value"),
+				new(CfgBufToken.Error, key, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.Value, key, "Value"),
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void ManyUnclosedSections()
+		public static async Task ManyUnclosedSections()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key{Key{Key{"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "Key{Key{Key{";
+			string errMsg = "Found end of stream when there were still 3 sections to close";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.Error, default, "Found end of stream when there were still 3 sections to close"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.Error, key, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void UnexpectedClose()
+		public static async Task UnexpectedClose()
 		{
-			using CfgStreamReader scr = new(new StringReader("}"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "}";
+			string errMsg = "Found section close when there was no section to close";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Error,default, "Found section close when there was no section to close"),
-				new(SectionCfgToken.Error, default, "Encountered error, cannot read further"),
+				new(CfgBufToken.Error, default, errMsg),
+				new(CfgBufToken.Error, default, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.Error, default, errMsg),
+				new(SectionCfgToken.Error, default, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void TooManyCloses()
+		public static async Task TooManyCloses()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key{}}"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "Key{}}";
+			string errMsg = "Found section close when there was no section to close";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.EndSection, CfgKey.Create("Key"), string.Empty),
-				new(SectionCfgToken.Error, default, "Found section close when there was no section to close"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.StartSection, key),
+				new(CfgBufToken.EndSection, key),
+				new(CfgBufToken.Error, key, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartSection, key),
+				new(SectionCfgToken.EndSection, key),
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void UnclosedQuotedValue()
+		public static async Task UnclosedQuotedValue()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key:'Value"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "Key:'Value";
+			string errMsg = "Found end of stream when reading quoted string: Value";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Error, CfgKey.Create("Key"), "Found end of stream when reading quoted string Value"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Error, key, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void UnclosedQuotedValueInsideList()
+		public static async Task UnclosedQuotedValueInsideList()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key:{'Value"));
-			CfgKey l1 = CfgKey.Create("Key");
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			CfgKey l1 = key;
+			string s = "Key:{'Value";
+			string errMsg = "Found end of stream when reading a list-contained quoted string: Value";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartList, l1, string.Empty),
-				new(SectionCfgToken.Error, l1, "Found end of stream when reading quoted string Value"),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Error, l1, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartList, key),
+				new(SectionCfgToken.Error, l1, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void UnclosedList()
+		public static async Task UnclosedUnquotedValueInsideList()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key:{"));
-			CfgKey l1 = CfgKey.Create("Key");
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			CfgKey l1 = key;
+			string s = "Key:{Value";
+			string errMsg = "Found end of stream when reading a list-contained unquoted string: Value";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.StartList, l1, string.Empty),
-				new(SectionCfgToken.Error, l1, "Encountered end of stream when trying to read List Values"),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Error, l1, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.Error, l1, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void LoneString()
+		public static async Task UnclosedList()
 		{
-			using CfgStreamReader scr = new(new StringReader("String"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			CfgKey l1 = key;
+			string s = "Key:{";
+			string errMsg = "Encountered end of stream when trying to read List Values";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Error, default, "Found end of stream when reading Key String"),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Error, l1, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.Error, l1, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void CommentAfterKeyButBeforeValue()
+		public static async Task UnclosedListWithComment()
 		{
-			using CfgStreamReader scr = new(new StringReader("Key:#Value\nInvalid"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			CfgKey l1 = key;
+			string s = "Key:{#MyComment";
+			string errMsg = "Found end of stream when reading a comment inside a list, and the list was not closed properly. The comment is: MyComment";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Value, CfgKey.Create("Key"), "#Value"),
-				new(SectionCfgToken.Error, default, "Found end of stream when reading Key Invalid"),
+				new(CfgBufToken.Key, l1),
+				new(CfgBufToken.StartList, l1),
+				new(CfgBufToken.Error, l1, errMsg),
 			});
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
+			{
+				new(SectionCfgToken.StartList, l1),
+				new(SectionCfgToken.Error, l1, errMsg),
+			}, LoadError.MalformedStream);
 		}
 		[Fact]
-		public static void KeyWithNewline()
+		public static async Task LoneString()
 		{
-			using CfgStreamReader scr = new(new StringReader("Ke\ny:Value"));
-			Helper.AssertReadMatches(scr, new ReadResult[]
+			string s = "String";
+			string errMsg = "Found end of stream when reading key: String";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ny"),
+				new(CfgBufToken.Error, default, errMsg),
 			});
-			using CfgStreamReader scr2 = new(new StringReader("Ke\ry:Value"));
-			Helper.AssertReadMatches(scr2, new ReadResult[]
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke\ry"),
-			});
-			using CfgStreamReader scr3 = new(new StringReader("Ke}y:Value"));
-			Helper.AssertReadMatches(scr3, new ReadResult[]
+				new(SectionCfgToken.Error, default, errMsg),
+			}, LoadError.MalformedStream);
+		}
+		[Fact]
+		public static async Task CommentAfterKeyButBeforeValue()
+		{
+			string s = "Key:#Value\nInvalid";
+			string errMsg = "Found end of stream when reading key: Invalid";
+			Helper.TestCfgBufferReader(s, new BufReadResult[]
 			{
-				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke}y"),
+				new(CfgBufToken.Key, key),
+				new(CfgBufToken.Value, key, "#Value"),
+				new(CfgBufToken.Error, key, errMsg),
 			});
-			using CfgStreamReader scr4 = new(new StringReader("Ke#y:Value"));
-			Helper.AssertReadMatches(scr4, new ReadResult[]
+			await Helper.TestCfgStreamReader(s, new ReadResult[]
 			{
-				new(SectionCfgToken.Error, default, "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: Ke#y"),
-			});
+				new(SectionCfgToken.Value, key, "#Value"),
+				new(SectionCfgToken.Error, key, errMsg),
+			}, LoadError.MalformedStream);
+		}
+		[Fact]
+		public static async Task KeyWithNewline()
+		{
+			foreach (var item in new (string key, string value)[]
+			{
+				("Ke\ny", "Value"),
+				("Ke\ry", "Value"),
+				("Ke}y", "Value"),
+				("Ke#y", "Value"),
+			})
+			{
+				string s = string.Concat(item.key, ":", item.value);
+				string errMsg = "This key is not valid, because it's empty, entirely whitespace, or contains forbidden characters (One of #:{}\\n\\r). This is the key: " + item.key;
+				Helper.TestCfgBufferReader(s, new BufReadResult[]
+				{
+					new(CfgBufToken.Error, default, errMsg),
+				});
+				await Helper.TestCfgStreamReader(s, new ReadResult[]
+				{
+					new(SectionCfgToken.Error, default, errMsg),
+				}, LoadError.MalformedStream);
+			}
 		}
 	}
 }

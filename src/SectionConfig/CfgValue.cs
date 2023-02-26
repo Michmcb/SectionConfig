@@ -100,5 +100,12 @@
 		{
 			throw new InvalidCastException("Requested " + nameof(CfgValueList) + " but this is a " + nameof(CfgValue));
 		}
+		/// <summary>
+		/// Calls <paramref name="value"/>.
+		/// </summary>
+		public void MatchType(Action<CfgValue> value, Action<CfgValueList> list, Action<CfgSection> section)
+		{
+			value(this);
+		}
 	}
 }

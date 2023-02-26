@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	internal sealed class CfgRootCfgLoaderResultHandler
+	internal struct CfgRootCfgLoaderReadResultHandler
 	{
 #if NETSTANDARD2_0
 		private const string KeySep = ":";
@@ -15,7 +15,7 @@
 		private ICfgObjectParent section;
 		private CfgValueList valueList;
 		private readonly Stack<ICfgObjectParent> parentSections;
-		internal CfgRootCfgLoaderResultHandler(CfgRoot root)
+		internal CfgRootCfgLoaderReadResultHandler(CfgRoot root)
 		{
 			this.root = root;
 			section = root;
@@ -24,7 +24,7 @@
 		}
 		internal ValOrErr<CfgRoot, ErrMsg<LoadError>> Result { get; private set; }
 		/// <summary>
-		/// Returns true if end or error encountered, false otherwise.
+		/// Returns false if error or end encountered, true otherwise.
 		/// </summary>
 		internal bool Handle(ReadResult rr)
 		{
@@ -36,9 +36,9 @@
 					{
 						parentSections.Push(section);
 						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
-						return true;
+						return false;
 					}
-					break;
+					return true;
 				case SectionCfgToken.Comment:
 					break;
 				case SectionCfgToken.StartList:
@@ -47,7 +47,7 @@
 					{
 						parentSections.Push(section);
 						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
-						return true;
+						return false;
 					}
 					break;
 				case SectionCfgToken.ListValue:
@@ -61,7 +61,7 @@
 					if (section.TryAdd(newSection) != AddError.Ok)
 					{
 						Result = new(new ErrMsg<LoadError>(LoadError.DuplicateKey, DuplicateKeyErrorMsg(parentSections, rr.Key.KeyString)));
-						return true;
+						return false;
 					}
 					section = newSection;
 					break;
@@ -70,21 +70,20 @@
 					break;
 				case SectionCfgToken.End:
 					Result = new(root);
-					return true;
+					return false;
 				default:
 				case SectionCfgToken.Error:
 					Result = new(new ErrMsg<LoadError>(LoadError.MalformedStream, rr.Content));
-					return true;
+					return false;
 			}
-			return false;
-
-			static string DuplicateKeyErrorMsg(Stack<ICfgObjectParent> parentSections, string currentKey)
-			{
-				// And, we want to write things in order of bottom to top.
-				// So, we reverse the iteration order, then skip the first object, which will be the CfgRoot object.
-				// Then we only have the CfgSections left and can join them all together, and append the current key onto the end.
-				return string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), KeySep, currentKey, "\" was found");
-			}
+			return true;
+		}
+		private static string DuplicateKeyErrorMsg(Stack<ICfgObjectParent> parentSections, string currentKey)
+		{
+			// And, we want to write things in order of bottom to top.
+			// So, we reverse the iteration order, then skip the first object, which will be the CfgRoot object.
+			// Then we only have the CfgSections left and can join them all together, and append the current key onto the end.
+			return string.Concat("Duplicate key \"", string.Join(KeySep, parentSections.Reverse().Skip(1).Select(x => ((CfgSection)x).Key.KeyString)), KeySep, currentKey, "\" was found");
 		}
 	}
 }

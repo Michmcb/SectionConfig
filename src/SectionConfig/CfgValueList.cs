@@ -101,5 +101,12 @@
 		{
 			return this;
 		}
+		/// <summary>
+		/// Calls <paramref name="list"/>.
+		/// </summary>
+		public void MatchType(Action<CfgValue> value, Action<CfgValueList> list, Action<CfgSection> section)
+		{
+			list(this);
+		}
 	}
 }

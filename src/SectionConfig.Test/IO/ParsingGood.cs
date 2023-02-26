@@ -399,6 +399,31 @@ namespace SectionConfig.Test.IO
 			});
 		}
 		[Fact]
+		public static async Task CommentThenKey()
+		{
+			foreach (var s in new string[]
+			{
+				"# Hello World!\nKey:Value",
+				"# Hello World!\rKey:Value",
+				"# Hello World!\r\nKey:Value",
+			})
+			{
+				Helper.TestCfgBufferReader(s, new BufReadResult[]
+				{
+					new(CfgBufToken.Comment, default, " Hello World!"),
+					new(CfgBufToken.Key, key),
+					new(CfgBufToken.Value, key, "Value"),
+					new(CfgBufToken.End),
+				});
+				await Helper.TestCfgStreamReader(s, new ReadResult[]
+				{
+					new(SectionCfgToken.Comment, default, " Hello World!"),
+					new(SectionCfgToken.Value, key, "Value"),
+					new(SectionCfgToken.End),
+				});
+			}
+		}
+		[Fact]
 		public static async Task EscapedDoubleQuote()
 		{
 			string s = "Key:\"\"\"\"";

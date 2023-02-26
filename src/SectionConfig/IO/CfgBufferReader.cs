@@ -171,7 +171,7 @@ namespace SectionConfig.IO
 									if (nl != -1)
 									{
 										// Found the newline, so return the comment, minus the newline
-										Position += index + nl;
+										Position += index + nl + 1;
 										return Token(CfgBufToken.Comment, comment.Slice(0, nl).TrimEnd('\r'));
 									}
 									else if (IsFinalBlock)

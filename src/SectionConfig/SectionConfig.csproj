@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>2.1</Version>
+    <Version>2.2</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -17,7 +17,8 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Fixed a bug which would cause a key directly following a comment to not be read correctly</PackageReleaseNotes>
+    <PackageReleaseNotes>- Fixed leaveOpen defaulting to true for CfgStreamWriter
+- Fixed the SectionLevel property</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

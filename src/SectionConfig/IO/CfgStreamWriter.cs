@@ -14,7 +14,8 @@
 		private static readonly char[] cr = new char[] { '\r' };
 		private static readonly char[] lf = new char[] { '\n' };
 		private static readonly char[] tab = new char[] { '\t' };
-		private readonly Stack<int> tokenIds;
+		private readonly Stack<int> sectionTokenIds;
+		private int valueListId;
 		private int nextId;
 		/// <summary>
 		/// Equivalent to passing a new <see cref="StreamWriter"/>. It will be closed on disposal.
@@ -37,7 +38,7 @@
 		/// <param name="quoting">Quoting style to use for values.</param>
 		/// <param name="multiline">Multiline style to use for values.</param>
 		/// <param name="leaveOpen"><see langword="true"/> to leave <paramref name="writer"/> open after this <see cref="CfgStreamWriter"/> is disposed. Otherwise, <see langword="false"/>.</param>
-		public CfgStreamWriter(TextWriter writer, ReadOnlyMemory<char> indentation = default, NewLine newLine = IO.NewLine.Platform, Quoting quoting = Quoting.DoubleIfNeeded, Multiline multiline = Multiline.Auto, bool leaveOpen = true)
+		public CfgStreamWriter(TextWriter writer, ReadOnlyMemory<char> indentation = default, NewLine newLine = IO.NewLine.Platform, Quoting quoting = Quoting.DoubleIfNeeded, Multiline multiline = Multiline.Auto, bool leaveOpen = false)
 		{
 			// Default indentation to tabs, otherwise use that they gave us (but it has to be all whitespace)
 			Indentation = indentation.Length == 0
@@ -57,7 +58,7 @@
 			Multiline = multiline;
 			LeaveOpen = leaveOpen;
 			State = WriteStreamState.Start;
-			tokenIds = new();
+			sectionTokenIds = new();
 			nextId = 0;
 			IndentationLevel = 0;
 		}
@@ -93,7 +94,7 @@
 		/// <summary>
 		/// The current nesting level of sections.
 		/// </summary>
-		public int SectionLevel { get; private set; }
+		public int SectionLevel => sectionTokenIds.Count;
 		/// <summary>
 		/// The current state.
 		/// </summary>
@@ -282,7 +283,7 @@
 			++IndentationLevel;
 			State = WriteStreamState.List;
 			int id = nextId++;
-			tokenIds.Push(id);
+			valueListId = id;
 			return new(this, id);
 		}
 		/// <summary>
@@ -300,7 +301,7 @@
 			++IndentationLevel;
 			State = WriteStreamState.Start;
 			int id = nextId++;
-			tokenIds.Push(id);
+			sectionTokenIds.Push(id);
 			return new(this, id);
 		}
 		internal void WriteListValue(ReadOnlySpan<char> val)
@@ -341,13 +342,14 @@
 			{
 				throw new InvalidOperationException(string.Concat("Can't write close value list because the current state is ", State.ToString(), " "));
 			}
-			if (!tokenIds.TryPop(out int popped) || popped != id)
+			if (valueListId != id)
 			{
 				throw new InvalidOperationException(string.Concat("Already closed this value list"));
 			}
 			WriteIndentation(--IndentationLevel);
 			Writer.Write(CfgSyntax.EndSectionOrList);
 			Writer.Write(NewLine.Span);
+			valueListId = 0;
 			State = WriteStreamState.Start;
 		}
 		internal void WriteCloseSection(int id)
@@ -356,14 +358,13 @@
 			{
 				throw new InvalidOperationException(string.Concat("Can't write close section because the current state is ", State.ToString(), " "));
 			}
-			if (!tokenIds.TryPop(out int popped) || popped != id)
+			if (!sectionTokenIds.TryPop(out int popped) || popped != id)
 			{
 				throw new InvalidOperationException(string.Concat("Already closed this section"));
 			}
 			WriteIndentation(--IndentationLevel);
 			Writer.Write(CfgSyntax.EndSectionOrList);
 			Writer.Write(NewLine.Span);
-			--SectionLevel;
 			State = WriteStreamState.Start;
 		}
 		private void WriteRawQuoted(ReadOnlySpan<char> val, Quoting quoting)
@@ -483,7 +484,7 @@
 			}
 		}
 		/// <summary>
-		/// If <see cref="LeaveOpen"/> is true, then disposes <see cref="Writer"/>.
+		/// If <see cref="LeaveOpen"/> is <see langword="false"/>, then disposes <see cref="Writer"/>.
 		/// Otherwise, does nothing.
 		/// </summary>
 		public void Dispose()

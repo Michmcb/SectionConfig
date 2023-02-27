@@ -60,7 +60,7 @@
 			// We use a tiny buffer size to be sure that we'll have to resize the buffer
 			using (IEnumerator<BufReadResult> e = expected.GetEnumerator())
 			{
-				CfgLoader.ReadAllBuffered(new StringReader(str), e, (tokens, actualToken, reader) =>
+				CfgBufferHelper.ReadAll(new SmallStringReader(str, 10), e, (tokens, actualToken, reader) =>
 				{
 					Assert.True(tokens.MoveNext());
 					var expected = tokens.Current;
@@ -74,7 +74,7 @@
 			// And here, we use a large buffer size so we aren't using stackalloc
 			using (IEnumerator<BufReadResult> e = expected.GetEnumerator())
 			{
-				CfgLoader.ReadAllBuffered(new StringReader(str), e, (tokens, actualToken, reader) =>
+				CfgBufferHelper.ReadAll(new SmallStringReader(str, 10), e, (tokens, actualToken, reader) =>
 				{
 					Assert.True(tokens.MoveNext());
 					var expected = tokens.Current;
@@ -132,7 +132,7 @@
 				expectedLoadResult = new(root);
 			}
 			// Allocating a small buffer size causes more re-reads and buffer copies, which is good because we want to make sure that works
-			using (CfgStreamReader csr = new(new StringReader(str), initialBufferSize: 16))
+			using (CfgStreamReader csr = new(new SmallStringReader(str, 10), initialBufferSize: 16))
 			{
 				int i = 0;
 				foreach (var er in expectedResults)
@@ -144,7 +144,7 @@
 					i++;
 				}
 			}
-			using (CfgStreamReader csr = new(new StringReader(str), initialBufferSize: 16))
+			using (CfgStreamReader csr = new(new SmallStringReader(str, 10), initialBufferSize: 16))
 			{
 				int i = 0;
 				foreach (var er in expectedResults)
@@ -187,16 +187,22 @@
 				}
 			}
 			IDictionary<string, Strings>? expectedDict = expectedLoadResult.Value != null ? ToDictionary(expectedLoadResult.Value, new(), new(cmp)) : null;
-			using (CfgStreamReader csr = new(new StringReader(str), initialBufferSize: 16))
+			using (CfgStreamReader csr = new(new SmallStringReader(str, 10), initialBufferSize: 16))
 			{
 				ValOrErr<Dictionary<string, Strings>, ErrMsg<LoadError>> actualResult = new DictionaryCfgLoader(cmp).TryLoad(csr);
 				CheckDict(actualResult);
 			}
-			using (CfgStreamReader csr = new(new StringReader(str), initialBufferSize: 16))
+			using (CfgStreamReader csr = new(new SmallStringReader(str, 10), initialBufferSize: 16))
 			{
 				ValOrErr<Dictionary<string, Strings>, ErrMsg<LoadError>> actualResult = await new DictionaryCfgLoader(cmp).TryLoadAsync(csr);
 				CheckDict(actualResult);
 			}
+
+			//using (SmallStringReader csr = new(str, 10))
+			//{
+			//	ValOrErr<Dictionary<string, Strings>, ErrMsg<LoadError>> actualResult = new DictionaryCfgLoader(cmp).TryLoadTextReader(csr);
+			//	CheckDict(actualResult);
+			//}
 
 			void CheckDict(ValOrErr<Dictionary<string, Strings>, ErrMsg<LoadError>> actualResult)
 			{

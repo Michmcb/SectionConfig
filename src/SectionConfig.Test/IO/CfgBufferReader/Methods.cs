@@ -1,6 +1,7 @@
 ﻿namespace SectionConfig.Test.IO.CfgBufferReader
 {
 	using SectionConfig.IO;
+	using System;
 	using Xunit;
 	public static class Methods
 	{
@@ -12,6 +13,13 @@
 			char[] smol = new char[5];
 			Assert.False(cbr.CopyLeftoverAndResetPosition(smol, out int copied));
 			Assert.Equal(0, copied);
+		}
+		[Fact]
+		public static void MassiveBufferSize()
+		{
+			CfgBufferReader cbr = new(new char[Array.MaxLength], isFinalBlock: false);
+			int sz = cbr.SuggestedNewBufferSize();
+			Assert.True(sz == int.MaxValue);
 		}
 	}
 }

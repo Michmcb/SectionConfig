@@ -3,7 +3,6 @@
 	using SectionConfig;
 	using SectionConfig.IO;
 	using System;
-
 	public readonly struct BufReadResult
 	{
 		public BufReadResult(CfgBufToken token) : this(token, default) { }

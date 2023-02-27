@@ -6,12 +6,19 @@
 	using System.Text;
 	using System.Threading.Tasks;
 
+#if NET6_0_OR_GREATER
 	/// <summary>
 	/// Reads section config data from a stream, forward-only.
 	/// Practically, this wraps instances of <see cref="CfgBufferReader"/>, manages the buffer, and translates the calls into simpler results for you.
-	/// If you want finer control, you can use <see cref="CfgLoader.ReadAllBuffered{T}(TextReader, T, HandleBufferToken{T}, int)"/>, for a thinner wrapper,
-	/// or use <see cref="CfgBufferReader"/> directly.
+	/// If you want finer control, you can use <see cref="CfgBufferHelper"/> for a thinner wrapper, or use <see cref="CfgBufferReader"/> directly.
 	/// </summary>
+#else
+	/// <summary>
+	/// Reads section config data from a stream, forward-only.
+	/// Practically, this wraps instances of <see cref="CfgBufferReader"/>, manages the buffer, and translates the calls into simpler results for you.
+	/// If you want finer control, you can use <see cref="CfgBufferReader"/> directly.
+	/// </summary>
+#endif
 	public sealed class CfgStreamReader : IDisposable
 	{
 		/// <summary>
@@ -93,7 +100,7 @@
 					int charsRead = Reader.Read(buf.AsSpan(leftover));
 #endif
 					currentDataSize = leftover + charsRead;
-					isFinalBlock = currentDataSize < buf.Length;
+					isFinalBlock = charsRead == 0;
 				}
 			}
 		}
@@ -119,7 +126,7 @@
 					int charsRead = await Reader.ReadAsync(buf.AsMemory(leftover));
 #endif
 					currentDataSize = leftover + charsRead;
-					isFinalBlock = currentDataSize < buf.Length;
+					isFinalBlock = charsRead == 0;
 				}
 			}
 		}
@@ -176,23 +183,34 @@
 						state = reader.GetState();
 						return new(SectionCfgToken.EndSection, reader.Key, SpanAsString(reader.Content));
 					case CfgBufToken.NeedMoreData:
-						// Need some more data, so, we rent a new buffer
-						if (buf.Length > 0 && state.position == 0)
+						// If our buffer is not yet allocated, then we just allocate one
+						if (buf.Length == 0)
 						{
-							// If we didn't manage to read anything, then double our buffer size
-							do
-							{
-								BufferSize *= 2;
-							} while (reader.Leftover > BufferSize);
+							newBuf = ArrayPool<char>.Shared.Rent(BufferSize);
+							return null;
 						}
-						newBuf = ArrayPool<char>.Shared.Rent(BufferSize);
-						reader.CopyLeftoverAndResetPosition(newBuf, out leftover);
-						state = reader.GetState();
-						// Finally, return our old buffer (if we rented one)
-						if (buf.Length > 0)
+
+						// If the reader couldn't read anything, check if we need a bigger buffer
+						int newBufferSize =
+#if NET6_0_OR_GREATER
+							Math.Min(Array.MaxLength, reader.SuggestedNewBufferSize());
+#else
+							reader.SuggestedNewBufferSize();
+#endif
+						if (newBufferSize > BufferSize)
 						{
+							// We need a bigger buffer, so rent a new one
+							newBuf = ArrayPool<char>.Shared.Rent(BufferSize = newBufferSize);
+							reader.CopyLeftoverAndResetPosition(newBuf, out leftover);
 							ArrayPool<char>.Shared.Return(buf);
 						}
+						else
+						{
+							// We don't, so we can just shift data backwards 
+							reader.CopyLeftoverAndResetPosition(buf, out leftover);
+							newBuf = buf;
+						}
+						state = reader.GetState();
 						return null;
 					case CfgBufToken.End:
 						if (buf.Length > 0)

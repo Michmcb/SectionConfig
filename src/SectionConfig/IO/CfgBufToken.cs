@@ -42,7 +42,7 @@
 		/// </summary>
 		EndSection,
 		/// <summary>
-		/// More data is required.
+		/// More data is required in the provided buffer to be able to accurately parse it.
 		/// </summary>
 		NeedMoreData,
 		/// <summary>

@@ -5,7 +5,7 @@
 	 <LangVersion>latest</LangVersion>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Version>2.2</Version>
+    <Version>2.3</Version>
     <Authors>Michael McBride</Authors>
     <Company></Company>
     <Product>SectionConfig</Product>
@@ -17,8 +17,9 @@
     <RepositoryUrl>https://github.com/Michmcb/SectionConfig</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageTags>config configuration text</PackageTags>
-    <PackageReleaseNotes>- Fixed leaveOpen defaulting to true for CfgStreamWriter
-- Fixed the SectionLevel property</PackageReleaseNotes>
+    <PackageReleaseNotes>- Fixed CfgStreamReader not working correctly for some TextReaders which do not completely fill the buffer before returning. Now, it only considers a zero-byte read to be the final block of the stream.
+- CfgBufferHelper added to take care of buffering for the caller. CfgLoader.ReadAllBuffered moved to this struct.
+- CfgBufferReader has a helper method to suggest a buffer of a new size.</PackageReleaseNotes>
     <PackageIcon>icon.png</PackageIcon>
     <PackageIconUrl />
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

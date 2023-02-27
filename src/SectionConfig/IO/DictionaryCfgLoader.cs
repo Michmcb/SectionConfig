@@ -1,6 +1,8 @@
 ﻿namespace SectionConfig.IO
 {
+	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Threading.Tasks;
 	/// <summary>
 	/// Loads config data into a <see cref="Dictionary{TKey, TValue}"/>, with keys separated with <see cref="KeySeparator"/>.
@@ -38,5 +40,24 @@
 			while (lh.Handle(await reader.ReadAsync())) ;
 			return lh.Error.Code == LoadError.Ok ? new(lh.Dictionary) : new(lh.Error);
 		}
+//#if NET6_0_OR_GREATER
+//		/// <inheritdoc/>
+//		public ValOrErr<Dictionary<string, Strings>, ErrMsg<LoadError>> TryLoadTextReader(TextReader reader)
+//		{
+//			DictionaryCfgBufferHandler handler = new(new Dictionary<string, Strings>(KeyComparer), KeySeparator);
+
+//			//CfgBufferReader cbr = CfgBufferHelper.CreateBufferReader(initBuf);
+//			//CfgBufferHelper helper = new(cbr, initBuf);
+//			Span<char> initBuf = stackalloc char[512];
+//			CfgBufferHelper helper = CfgBufferHelper.Create(reader, initBuf);
+//			bool b = true;
+//			while (b)
+//			{
+//				var t = helper.Read(reader);
+//				b = handler.Handle(t, helper.BufferReader);
+//			}
+//			return handler.Error.Code == LoadError.Ok ? new(handler.Dictionary) : new(handler.Error);
+//		}
+//#endif
 	}
 }

@@ -6,11 +6,13 @@ namespace SectionConfig.IO
 
 	/// <summary>
 	/// Reads section config data from a buffer, forward-only.
-	/// To use this struct, first you want to create an instance, and don't pass in any state.
+	/// To use this struct, first you want to create an instance, passing in the initial buffer and no state.
 	/// Then, keep calling <see cref="Read"/> until it returns <see cref="CfgBufToken.NeedMoreData"/>.
-	/// When it does, call <see cref="CopyLeftoverAndResetPosition(Span{char}, out int)"/> to copy leftover data into a new buffer.
-	/// Then, fill the remainder of the new buffer with data from whatever source you are using.
-	/// And finally, create a new instance of <see cref="CfgBufferReader"/>, passing in the new buffer and the result of <see cref="GetState"/>, and repeat the above.
+	/// When it does, call <see cref="SuggestedNewBufferSize"/> to see if your source buffer needs to be resized to be larger; resize (or reallocate) the source buffer if needed.
+	/// Then, call <see cref="CopyLeftoverAndResetPosition(Span{char}, out int)"/> to copy leftover data into a the new buffer. It's suggested to do this even if you
+	/// didn't resize your source buffer, as that moves data backwards in the array to overwrite leftover data, which can reduce allocations.
+	/// Then, fill the remainder of the source buffer with data from whatever source you are using.
+	/// And finally, create a new instance of <see cref="CfgBufferReader"/>, passing in the source buffer and the result of <see cref="GetState"/>, and repeat the above.
 	/// </summary>
 	public ref struct CfgBufferReader
 	{
@@ -59,7 +61,6 @@ namespace SectionConfig.IO
 		public int Position { get; private set; }
 		/// <summary>
 		/// How many chars are leftover in <see cref="Buffer"/>.
-		/// This value can be used to ensure you have a large enough buffer when calling <see cref="CopyLeftoverAndResetPosition(Span{char}, out int)"/>.
 		/// </summary>
 		public int Leftover => Buffer.Length - Position;
 		/// <summary>
@@ -96,8 +97,33 @@ namespace SectionConfig.IO
 			return new CfgReaderState(Key, Position, keyIndentation, mlIndentation, sectionKeys, state);
 		}
 		/// <summary>
+		/// Gets the smallest acceptable buffer size to avoid an infinite loop of <see cref="CfgBufToken.NeedMoreData"/>.
+		/// Can only return values up to a maximum of <see cref="int.MaxValue"/>.
+		/// </summary>
+		/// <exception cref="OverflowException"/>
+		public int SuggestedNewBufferSize()
+		{
+			// This calculates the smallest power of 2 that's larger than our current buffer size
+			// This code we used to have is pointless: Math.Max(Buffer.Length, Leftover + 1);
+			// Because Leftover is always smaller than Buffer.Length
+
+			// As we go up in powers of 2, if the current buffer size is (impressively, somehow) larger than
+			// the largest power of 2 that is below int.MaxValue, then just return int.MaxValue.
+			if (Buffer.Length + 1 > 0x4000_000)
+			{
+				return int.MaxValue;
+			}
+			int currentBufferSize = Buffer.Length + 1;
+			currentBufferSize |= currentBufferSize >> 1;
+			currentBufferSize |= currentBufferSize >> 2;
+			currentBufferSize |= currentBufferSize >> 4;
+			currentBufferSize |= currentBufferSize >> 8;
+			currentBufferSize |= currentBufferSize >> 16;
+			return currentBufferSize + 1;
+		}
+		/// <summary>
 		/// Copies the leftover data in <see cref="Buffer"/> to <paramref name="newBuf"/>, and resets <see cref="Position"/> to 0 if successful.
-		/// If <paramref name="newBuf"/> is too small to hold the leftover data (that is, smaller than <see cref="Leftover"/>), then returns the size required.
+		/// If <paramref name="newBuf"/> is too small to hold the leftover data AND new data (that is, smaller or equal to than <see cref="Leftover"/>), then returns the <see langword="false"/>.
 		/// If copied successfully, returns 0.
 		/// After calling this method, fill the remainder of <paramref name="newBuf"/> with the next data (start filling from index <paramref name="copied"/>).
 		/// Finally, call <see cref="GetState"/>, as position is reset to 0.
@@ -107,6 +133,7 @@ namespace SectionConfig.IO
 		/// <returns>true on success, false on failure.</returns>
 		public bool CopyLeftoverAndResetPosition(Span<char> newBuf, out int copied)
 		{
+			// If we're at the end of the buffer, don't copy anything
 			if (Position == Buffer.Length)
 			{
 				Position = 0;
@@ -117,12 +144,13 @@ namespace SectionConfig.IO
 			//       v
 			// 0123456789
 			// Leftover would be 4 bytes
-			ReadOnlySpan<char> leftover = Buffer.Slice(Position);
-			if (newBuf.Length < Leftover)
+			// If there's not enough space, don't copy
+			if (newBuf.Length <= Leftover)
 			{
 				copied = 0;
 				return false;
 			}
+			ReadOnlySpan<char> leftover = Buffer.Slice(Position);
 			leftover.CopyTo(newBuf);
 			copied = leftover.Length;
 			Position = 0;
@@ -424,10 +452,18 @@ namespace SectionConfig.IO
 						}
 						else
 						{
-							// Multiline is done
-							Position += trim;
-							state = ReadStreamState.Section;
-							return Token(CfgBufToken.EndMultiline, default);
+							if (IsFinalBlock)
+							{
+								// Multiline is done
+								Position += trim;
+								state = ReadStreamState.Section;
+								return Token(CfgBufToken.EndMultiline, default);
+							}
+							else
+							{
+								// There may be another tab but we don't know about it yet
+								return CfgBufToken.NeedMoreData;
+							}
 						}
 					}
 				case ReadStreamState.List:
